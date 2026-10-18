@@ -14,6 +14,11 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/Wei-Shaw/sub2api/ent/account"
 	"github.com/Wei-Shaw/sub2api/ent/accountgroup"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotacycle"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotamember"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotapolicy"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotareservation"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotausage"
 	"github.com/Wei-Shaw/sub2api/ent/announcement"
 	"github.com/Wei-Shaw/sub2api/ent/announcementread"
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
@@ -114,6 +119,11 @@ func checkColumn(t, c string) error {
 			apikey.Table:                        apikey.ValidColumn,
 			account.Table:                       account.ValidColumn,
 			accountgroup.Table:                  accountgroup.ValidColumn,
+			accountuserquotacycle.Table:         accountuserquotacycle.ValidColumn,
+			accountuserquotamember.Table:        accountuserquotamember.ValidColumn,
+			accountuserquotapolicy.Table:        accountuserquotapolicy.ValidColumn,
+			accountuserquotareservation.Table:   accountuserquotareservation.ValidColumn,
+			accountuserquotausage.Table:         accountuserquotausage.ValidColumn,
 			announcement.Table:                  announcement.ValidColumn,
 			announcementread.Table:              announcementread.ValidColumn,
 			authidentity.Table:                  authidentity.ValidColumn,

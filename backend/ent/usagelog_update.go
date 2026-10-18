@@ -74,6 +74,60 @@ func (_u *UsageLogUpdate) SetNillableAccountID(v *int64) *UsageLogUpdate {
 	return _u
 }
 
+// SetAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field.
+func (_u *UsageLogUpdate) SetAccountUserQuotaCycleID(v int64) *UsageLogUpdate {
+	_u.mutation.ResetAccountUserQuotaCycleID()
+	_u.mutation.SetAccountUserQuotaCycleID(v)
+	return _u
+}
+
+// SetNillableAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field if the given value is not nil.
+func (_u *UsageLogUpdate) SetNillableAccountUserQuotaCycleID(v *int64) *UsageLogUpdate {
+	if v != nil {
+		_u.SetAccountUserQuotaCycleID(*v)
+	}
+	return _u
+}
+
+// AddAccountUserQuotaCycleID adds value to the "account_user_quota_cycle_id" field.
+func (_u *UsageLogUpdate) AddAccountUserQuotaCycleID(v int64) *UsageLogUpdate {
+	_u.mutation.AddAccountUserQuotaCycleID(v)
+	return _u
+}
+
+// ClearAccountUserQuotaCycleID clears the value of the "account_user_quota_cycle_id" field.
+func (_u *UsageLogUpdate) ClearAccountUserQuotaCycleID() *UsageLogUpdate {
+	_u.mutation.ClearAccountUserQuotaCycleID()
+	return _u
+}
+
+// SetOriginalGroupID sets the "original_group_id" field.
+func (_u *UsageLogUpdate) SetOriginalGroupID(v int64) *UsageLogUpdate {
+	_u.mutation.ResetOriginalGroupID()
+	_u.mutation.SetOriginalGroupID(v)
+	return _u
+}
+
+// SetNillableOriginalGroupID sets the "original_group_id" field if the given value is not nil.
+func (_u *UsageLogUpdate) SetNillableOriginalGroupID(v *int64) *UsageLogUpdate {
+	if v != nil {
+		_u.SetOriginalGroupID(*v)
+	}
+	return _u
+}
+
+// AddOriginalGroupID adds value to the "original_group_id" field.
+func (_u *UsageLogUpdate) AddOriginalGroupID(v int64) *UsageLogUpdate {
+	_u.mutation.AddOriginalGroupID(v)
+	return _u
+}
+
+// ClearOriginalGroupID clears the value of the "original_group_id" field.
+func (_u *UsageLogUpdate) ClearOriginalGroupID() *UsageLogUpdate {
+	_u.mutation.ClearOriginalGroupID()
+	return _u
+}
+
 // SetRequestID sets the "request_id" field.
 func (_u *UsageLogUpdate) SetRequestID(v string) *UsageLogUpdate {
 	_u.mutation.SetRequestID(v)
@@ -1135,6 +1189,24 @@ func (_u *UsageLogUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.AccountUserQuotaCycleID(); ok {
+		_spec.SetField(usagelog.FieldAccountUserQuotaCycleID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedAccountUserQuotaCycleID(); ok {
+		_spec.AddField(usagelog.FieldAccountUserQuotaCycleID, field.TypeInt64, value)
+	}
+	if _u.mutation.AccountUserQuotaCycleIDCleared() {
+		_spec.ClearField(usagelog.FieldAccountUserQuotaCycleID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.OriginalGroupID(); ok {
+		_spec.SetField(usagelog.FieldOriginalGroupID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedOriginalGroupID(); ok {
+		_spec.AddField(usagelog.FieldOriginalGroupID, field.TypeInt64, value)
+	}
+	if _u.mutation.OriginalGroupIDCleared() {
+		_spec.ClearField(usagelog.FieldOriginalGroupID, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.RequestID(); ok {
 		_spec.SetField(usagelog.FieldRequestID, field.TypeString, value)
 	}
@@ -1585,6 +1657,60 @@ func (_u *UsageLogUpdateOne) SetNillableAccountID(v *int64) *UsageLogUpdateOne {
 	if v != nil {
 		_u.SetAccountID(*v)
 	}
+	return _u
+}
+
+// SetAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field.
+func (_u *UsageLogUpdateOne) SetAccountUserQuotaCycleID(v int64) *UsageLogUpdateOne {
+	_u.mutation.ResetAccountUserQuotaCycleID()
+	_u.mutation.SetAccountUserQuotaCycleID(v)
+	return _u
+}
+
+// SetNillableAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field if the given value is not nil.
+func (_u *UsageLogUpdateOne) SetNillableAccountUserQuotaCycleID(v *int64) *UsageLogUpdateOne {
+	if v != nil {
+		_u.SetAccountUserQuotaCycleID(*v)
+	}
+	return _u
+}
+
+// AddAccountUserQuotaCycleID adds value to the "account_user_quota_cycle_id" field.
+func (_u *UsageLogUpdateOne) AddAccountUserQuotaCycleID(v int64) *UsageLogUpdateOne {
+	_u.mutation.AddAccountUserQuotaCycleID(v)
+	return _u
+}
+
+// ClearAccountUserQuotaCycleID clears the value of the "account_user_quota_cycle_id" field.
+func (_u *UsageLogUpdateOne) ClearAccountUserQuotaCycleID() *UsageLogUpdateOne {
+	_u.mutation.ClearAccountUserQuotaCycleID()
+	return _u
+}
+
+// SetOriginalGroupID sets the "original_group_id" field.
+func (_u *UsageLogUpdateOne) SetOriginalGroupID(v int64) *UsageLogUpdateOne {
+	_u.mutation.ResetOriginalGroupID()
+	_u.mutation.SetOriginalGroupID(v)
+	return _u
+}
+
+// SetNillableOriginalGroupID sets the "original_group_id" field if the given value is not nil.
+func (_u *UsageLogUpdateOne) SetNillableOriginalGroupID(v *int64) *UsageLogUpdateOne {
+	if v != nil {
+		_u.SetOriginalGroupID(*v)
+	}
+	return _u
+}
+
+// AddOriginalGroupID adds value to the "original_group_id" field.
+func (_u *UsageLogUpdateOne) AddOriginalGroupID(v int64) *UsageLogUpdateOne {
+	_u.mutation.AddOriginalGroupID(v)
+	return _u
+}
+
+// ClearOriginalGroupID clears the value of the "original_group_id" field.
+func (_u *UsageLogUpdateOne) ClearOriginalGroupID() *UsageLogUpdateOne {
+	_u.mutation.ClearOriginalGroupID()
 	return _u
 }
 
@@ -2678,6 +2804,24 @@ func (_u *UsageLogUpdateOne) sqlSave(ctx context.Context) (_node *UsageLog, err 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.AccountUserQuotaCycleID(); ok {
+		_spec.SetField(usagelog.FieldAccountUserQuotaCycleID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedAccountUserQuotaCycleID(); ok {
+		_spec.AddField(usagelog.FieldAccountUserQuotaCycleID, field.TypeInt64, value)
+	}
+	if _u.mutation.AccountUserQuotaCycleIDCleared() {
+		_spec.ClearField(usagelog.FieldAccountUserQuotaCycleID, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.OriginalGroupID(); ok {
+		_spec.SetField(usagelog.FieldOriginalGroupID, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedOriginalGroupID(); ok {
+		_spec.AddField(usagelog.FieldOriginalGroupID, field.TypeInt64, value)
+	}
+	if _u.mutation.OriginalGroupIDCleared() {
+		_spec.ClearField(usagelog.FieldOriginalGroupID, field.TypeInt64)
 	}
 	if value, ok := _u.mutation.RequestID(); ok {
 		_spec.SetField(usagelog.FieldRequestID, field.TypeString, value)

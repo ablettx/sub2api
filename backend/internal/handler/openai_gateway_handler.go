@@ -2816,6 +2816,10 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 				zap.Error(openAICompatibleSelectionErrorForLog(err, requestPlatform)),
 				zap.Int("excluded_account_count", len(failedAccountIDs)),
 			)
+			if quotaClose := service.WriteAccountUserQuotaWSError(ctx, wsConn, err); quotaClose != nil {
+				closeOpenAIClientWS(wsConn, quotaClose.StatusCode(), quotaClose.Reason())
+				return
+			}
 			if lastFailoverErr != nil {
 				closeOpenAIWSFailoverExhausted(c, wsConn, lastFailoverErr)
 			} else {
@@ -3028,7 +3032,8 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 					}
 					routeModel = wsRouteModel
 				}
-				mapping, _ := h.gatewayService.ResolveChannelMappingAndRestrict(ctx, apiKey.GroupID, routeModel)
+				effectiveKey := service.AccountUserQuotaEffectiveAPIKey(ctx, apiKey)
+				mapping, _ := h.gatewayService.ResolveChannelMappingAndRestrict(ctx, effectiveKey.GroupID, routeModel)
 				mappedModelUnchanged := false
 				if previous := turnChannelMapping.Load(); previous != nil && previous.turn < turn {
 					mappedModelUnchanged = strings.TrimSpace(previous.mapping.MappedModel) == strings.TrimSpace(mapping.MappedModel)
@@ -3048,7 +3053,8 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 				// 当前账号，越线即要求客户端重连重选（连接绑定单一上游账号，
 				// 无法中途换号）。本 turn 的准入与计费共用同一 pricingAt。
 				turnBillingCtx := turnBillingAPIKeys.begin(ctx, h.apiKeyService, turn, apiKey)
-				turnCtx, turnAt := h.gatewayService.WithOpenAITurnPricingContext(turnBillingCtx, apiKey.GroupID)
+				effectiveKey := service.AccountUserQuotaEffectiveAPIKey(ctx, apiKey)
+				turnCtx, turnAt := h.gatewayService.WithOpenAITurnPricingContext(turnBillingCtx, effectiveKey.GroupID)
 				if _, vetoed, reason := h.gatewayService.ProfitControlVetoLatest(turnCtx, account); vetoed {
 					reqLog.Info("openai.websocket_turn_profit_vetoed",
 						zap.Int("turn", turn),
@@ -4398,6 +4404,7 @@ func (h *OpenAIGatewayHandler) recordCyberPolicyIfMarked(c *gin.Context, apiKey 
 	// 提前拍成标量，避免在下方 goroutine 内访问 gin.Context。
 	sessionID := service.ExtractClientSessionID(c)
 	nativeCompactionV2 := service.IsOpenAINativeCompactionV2(c)
+	quotaExecution := service.AccountUserQuotaExecutionFromGin(c)
 	apiKeyPrefix := ""
 	if apiKey != nil {
 		apiKeyPrefix = keyPrefix(apiKey.Key, 8)
@@ -4452,23 +4459,24 @@ func (h *OpenAIGatewayHandler) recordCyberPolicyIfMarked(c *gin.Context, apiKey 
 		}
 		if forwardErrored && gwSvc != nil {
 			gwSvc.RecordCyberPolicyUsageLog(ctx, service.CyberPolicyUsageInput{
-				APIKey:             apiKey,
-				Account:            account,
-				Subscription:       subscription,
-				RequestID:          requestID,
-				Model:              model,
-				Stream:             stream,
-				InputTokens:        mark.UpstreamInTok,
-				OutputTokens:       mark.UpstreamOutTok,
-				InboundEndpoint:    inboundEndpoint,
-				UpstreamEndpoint:   upstreamEndpoint,
-				UserAgent:          userAgent,
-				IPAddress:          clientIPStr,
-				SessionID:          sessionID,
-				RequestPayloadHash: requestPayloadHash,
-				APIKeyService:      apiKeySvc,
-				NativeCompactionV2: nativeCompactionV2,
-				ChannelUsageFields: channelFields,
+				AccountUserQuotaExecution: quotaExecution,
+				APIKey:                    apiKey,
+				Account:                   account,
+				Subscription:              subscription,
+				RequestID:                 requestID,
+				Model:                     model,
+				Stream:                    stream,
+				InputTokens:               mark.UpstreamInTok,
+				OutputTokens:              mark.UpstreamOutTok,
+				InboundEndpoint:           inboundEndpoint,
+				UpstreamEndpoint:          upstreamEndpoint,
+				UserAgent:                 userAgent,
+				IPAddress:                 clientIPStr,
+				SessionID:                 sessionID,
+				RequestPayloadHash:        requestPayloadHash,
+				APIKeyService:             apiKeySvc,
+				NativeCompactionV2:        nativeCompactionV2,
+				ChannelUsageFields:        channelFields,
 			})
 		}
 		if opsSvc != nil {

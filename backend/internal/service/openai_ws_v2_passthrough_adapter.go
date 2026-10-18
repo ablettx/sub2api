@@ -1056,6 +1056,10 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 				}
 				if hooks != nil && hooks.BeforeTurn != nil {
 					if err := hooks.BeforeTurn(turnNo); err != nil {
+						var quotaErr *AccountUserQuotaError
+						if errors.As(err, &quotaErr) {
+							return payload, nil, WriteAccountUserQuotaWSError(ctx, clientConn, quotaErr)
+						}
 						return payload, nil, err
 					}
 				}
@@ -1111,6 +1115,9 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 			//     覆盖（Store(nil)），因为 OpenAI 上游对该帧实际不传
 			//     service_tier 时按 default 处理，billing 应如实反映。
 			if policyErr == nil && blocked == nil && isResponseCreate {
+				if err := markAccountUserQuotaSent(ctx, c); err != nil {
+					return nil, nil, err
+				}
 				usageMeta.updateFromResponseCreate(out, model, requestModelForThisFrame)
 				_, actualModel := usageMeta.turnModels(requestModelForThisFrame)
 				SetOpsUpstreamModel(c, actualModel)
@@ -1135,6 +1142,9 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 		},
 	}
 	upstreamFirstMessageSent := false
+	if err := markAccountUserQuotaSent(ctx, c); err != nil {
+		return err
+	}
 	firstWriteCtx, cancelFirstWrite := context.WithTimeout(ctx, s.openAIWSWriteTimeout())
 	firstWriteErr := relayUpstreamFrameConn.WriteFrame(firstWriteCtx, coderws.MessageText, firstClientMessage)
 	cancelFirstWrite()

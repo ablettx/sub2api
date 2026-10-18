@@ -15,22 +15,23 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 )
 
 var (
-	ErrNoUpdateAvailable         = infraerrors.Conflict("ALREADY_UP_TO_DATE", "no update available; current version is latest")
-	ErrRollbackVersionNotAllowed = infraerrors.BadRequest("ROLLBACK_VERSION_NOT_ALLOWED", "version is not in the allowed rollback list")
+	ErrNoUpdateAvailable          = infraerrors.Conflict("ALREADY_UP_TO_DATE", "no update available; current version is latest")
+	ErrRollbackVersionNotAllowed  = infraerrors.BadRequest("ROLLBACK_VERSION_NOT_ALLOWED", "version is not in the allowed rollback list")
+	ErrMaintenanceRestartRequired = infraerrors.Conflict("MAINTENANCE_RESTART_REQUIRED", "a maintenance package is already installed; restart before installing another package")
 )
 
 const (
 	updateCacheKey = "update_check_cache"
 	updateCacheTTL = 1200 // 20 minutes
-	githubRepo     = "Wei-Shaw/sub2api"
 
 	// Security: allowed download domains for updates
 	allowedDownloadHost = "github.com"
@@ -61,10 +62,27 @@ type GitHubReleaseClient interface {
 
 // UpdateService handles software updates
 type UpdateService struct {
-	cache          UpdateCache
-	githubClient   GitHubReleaseClient
-	currentVersion string
-	buildType      string // "source" for manual builds, "release" for CI builds
+	cache            UpdateCache
+	githubClient     GitHubReleaseClient
+	currentVersion   string
+	buildType        string // "source" for manual builds, "release" for CI builds
+	source           MaintenanceSource
+	commit           string
+	rollbackFloor    string
+	databaseState    func(context.Context) (map[string]string, error)
+	executablePath   func() (string, error)
+	prepareRestart   func(context.Context) error
+	operationMu      sync.Mutex
+	pendingVersion   atomic.Pointer[string]
+	runningBinarySHA string
+}
+
+// PrepareRestart keeps admission paused after success until the process exits.
+func (s *UpdateService) PrepareRestart(ctx context.Context) error {
+	if s.prepareRestart == nil {
+		return nil
+	}
+	return s.prepareRestart(ctx)
 }
 
 // NewUpdateService creates a new UpdateService
@@ -74,18 +92,23 @@ func NewUpdateService(cache UpdateCache, githubClient GitHubReleaseClient, versi
 		githubClient:   githubClient,
 		currentVersion: version,
 		buildType:      buildType,
+		source:         DefaultMaintenanceSource(),
+		rollbackFloor:  "0.2.17-ablett.1",
+		executablePath: os.Executable,
 	}
 }
 
 // UpdateInfo contains update information
 type UpdateInfo struct {
-	CurrentVersion string       `json:"current_version"`
-	LatestVersion  string       `json:"latest_version"`
-	HasUpdate      bool         `json:"has_update"`
-	ReleaseInfo    *ReleaseInfo `json:"release_info,omitempty"`
-	Cached         bool         `json:"cached"`
-	Warning        string       `json:"warning,omitempty"`
-	BuildType      string       `json:"build_type"` // "source" or "release"
+	RestartRequired bool              `json:"restart_required,omitempty"`
+	Source          MaintenanceSource `json:"source"`
+	CurrentVersion  string            `json:"current_version"`
+	LatestVersion   string            `json:"latest_version"`
+	HasUpdate       bool              `json:"has_update"`
+	ReleaseInfo     *ReleaseInfo      `json:"release_info,omitempty"`
+	Cached          bool              `json:"cached"`
+	Warning         string            `json:"warning,omitempty"`
+	BuildType       string            `json:"build_type"` // "source" or "release"
 }
 
 // ReleaseInfo contains GitHub release details
@@ -131,6 +154,9 @@ type GitHubAsset struct {
 
 // CheckUpdate checks for available updates
 func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInfo, error) {
+	if pending := s.pendingVersion.Load(); pending != nil {
+		return &UpdateInfo{Source: s.source, CurrentVersion: s.currentVersion, LatestVersion: *pending, BuildType: s.buildType, RestartRequired: true}, nil
+	}
 	// Try cache first
 	if !force {
 		if cached, err := s.getFromCache(ctx); err == nil && cached != nil {
@@ -147,6 +173,7 @@ func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInf
 			return cached, nil
 		}
 		return &UpdateInfo{
+			Source:         s.source,
 			CurrentVersion: s.currentVersion,
 			LatestVersion:  s.currentVersion,
 			HasUpdate:      false,
@@ -163,6 +190,11 @@ func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInf
 // PerformUpdate downloads and applies the update
 // Uses atomic file replacement pattern for safe in-place updates
 func (s *UpdateService) PerformUpdate(ctx context.Context) error {
+	s.operationMu.Lock()
+	defer s.operationMu.Unlock()
+	if s.pendingVersion.Load() != nil {
+		return ErrMaintenanceRestartRequired
+	}
 	info, err := s.CheckUpdate(ctx, true)
 	if err != nil {
 		return err
@@ -172,20 +204,34 @@ func (s *UpdateService) PerformUpdate(ctx context.Context) error {
 		return ErrNoUpdateAvailable
 	}
 
-	return s.applyReleaseAssets(ctx, info.ReleaseInfo.Assets)
+	if info.ReleaseInfo == nil {
+		return fmt.Errorf("compatible release assets are missing")
+	}
+	if err := s.applyReleaseAssets(ctx, info.LatestVersion, info.ReleaseInfo.Assets); err != nil {
+		return err
+	}
+	s.pendingVersion.Store(&info.LatestVersion)
+	return nil
 }
 
 // applyReleaseAssets downloads the platform archive from the given release assets,
 // verifies its checksum, and atomically swaps the running binary.
 // Shared by PerformUpdate (latest) and RollbackToVersion (specific older version).
-func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []Asset) error {
+func (s *UpdateService) applyReleaseAssets(ctx context.Context, version string, releaseAssets []Asset) error {
+	manifest, err := s.fetchMaintenanceManifest(ctx, version, releaseAssets)
+	if err != nil {
+		return err
+	}
 	// Find matching archive and checksum for current platform
-	archiveName := s.getArchiveName()
+	archiveName := fmt.Sprintf("sub2api_%s_%s.tar.gz", strings.TrimPrefix(version, "v"), s.getArchiveName())
 	var downloadURL string
 	var checksumURL string
 
 	for _, asset := range releaseAssets {
-		if strings.Contains(asset.Name, archiveName) && !strings.HasSuffix(asset.Name, ".txt") {
+		if asset.Name == archiveName {
+			if downloadURL != "" {
+				return fmt.Errorf("duplicate platform archive")
+			}
 			downloadURL = asset.DownloadURL
 		}
 		if asset.Name == "checksums.txt" {
@@ -196,19 +242,22 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 	if downloadURL == "" {
 		return fmt.Errorf("no compatible release found for %s/%s", runtime.GOOS, runtime.GOARCH)
 	}
+	if checksumURL == "" || manifest.Archive != archiveName {
+		return fmt.Errorf("release checksum or matching archive metadata is missing")
+	}
 
 	// SECURITY: Validate download URL is from trusted domain
-	if err := validateDownloadURL(downloadURL); err != nil {
+	if err := s.validateReleaseAssetURL(downloadURL, version, archiveName); err != nil {
 		return fmt.Errorf("invalid download URL: %w", err)
 	}
 	if checksumURL != "" {
-		if err := validateDownloadURL(checksumURL); err != nil {
+		if err := s.validateReleaseAssetURL(checksumURL, version, "checksums.txt"); err != nil {
 			return fmt.Errorf("invalid checksum URL: %w", err)
 		}
 	}
 
 	// Get current executable path
-	exePath, err := os.Executable()
+	exePath, err := s.executablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
@@ -239,11 +288,19 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 			return fmt.Errorf("checksum verification failed: %w", err)
 		}
 	}
+	archiveHash, err := fileSHA256(archivePath)
+	if err != nil || archiveHash != manifest.SHA256 {
+		return fmt.Errorf("archive does not match release manifest")
+	}
 
 	// Extract binary from archive
 	newBinaryPath := filepath.Join(tempDir, "sub2api")
 	if err := s.extractBinary(archivePath, newBinaryPath); err != nil {
 		return fmt.Errorf("extraction failed: %w", err)
+	}
+	binaryHash, err := fileSHA256(newBinaryPath)
+	if err != nil || binaryHash != manifest.BinarySHA256 {
+		return fmt.Errorf("binary does not match release manifest")
 	}
 
 	// Set executable permission before replacement
@@ -257,21 +314,12 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 	// If step 2 fails, restore backup
 	backupPath := exePath + ".backup"
 
-	// Remove old backup if exists
-	_ = os.Remove(backupPath)
-
-	// Step 1: Move current binary to backup
-	if err := os.Rename(exePath, backupPath); err != nil {
-		return fmt.Errorf("backup failed: %w", err)
+	// Prepare the binary and its compatibility record before replacing either file.
+	if err := s.prepareMaintenanceBackup(ctx, exePath, tempDir, backupPath); err != nil {
+		return err
 	}
-
-	// Step 2: Move new binary to target location (atomic, same filesystem)
 	if err := os.Rename(newBinaryPath, exePath); err != nil {
-		// Restore backup on failure
-		if restoreErr := os.Rename(backupPath, exePath); restoreErr != nil {
-			return fmt.Errorf("replace failed and restore failed: %w (restore error: %v)", err, restoreErr)
-		}
-		return fmt.Errorf("replace failed (restored backup): %w", err)
+		return fmt.Errorf("replace failed (current binary preserved): %w", err)
 	}
 
 	// Success - backup file is kept for rollback capability
@@ -281,7 +329,9 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 
 // Rollback restores the previous version
 func (s *UpdateService) Rollback() error {
-	exePath, err := os.Executable()
+	s.operationMu.Lock()
+	defer s.operationMu.Unlock()
+	exePath, err := s.executablePath()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
@@ -294,10 +344,30 @@ func (s *UpdateService) Rollback() error {
 	if _, err := os.Stat(backupFile); os.IsNotExist(err) {
 		return fmt.Errorf("no backup found")
 	}
+	data, err := os.ReadFile(backupFile + ".json")
+	if err != nil {
+		return fmt.Errorf("compatible backup metadata is required: %w", err)
+	}
+	var backup maintenanceBackup
+	if err := json.Unmarshal(data, &backup); err != nil {
+		return fmt.Errorf("invalid backup metadata: %w", err)
+	}
+	if err := s.validateMaintenanceManifest(context.Background(), &backup.Manifest, backup.Manifest.Version); err != nil {
+		return err
+	}
+	digest, err := fileSHA256(backupFile)
+	if err != nil || digest != backup.BinarySHA256 || digest != backup.Manifest.BinarySHA256 {
+		return fmt.Errorf("backup checksum mismatch")
+	}
 
 	// Replace current with backup
 	if err := os.Rename(backupFile, exePath); err != nil {
 		return fmt.Errorf("rollback failed: %w", err)
+	}
+	if backup.Manifest.Version == strings.TrimPrefix(s.currentVersion, "v") {
+		s.pendingVersion.Store(nil)
+	} else {
+		s.pendingVersion.Store(&backup.Manifest.Version)
 	}
 
 	return nil
@@ -327,6 +397,11 @@ func (s *UpdateService) ListRollbackVersions(ctx context.Context) ([]RollbackVer
 // The target must be one of the versions returned by ListRollbackVersions;
 // anything else (including the current version) is rejected.
 func (s *UpdateService) RollbackToVersion(ctx context.Context, version string) error {
+	s.operationMu.Lock()
+	defer s.operationMu.Unlock()
+	if s.pendingVersion.Load() != nil {
+		return ErrMaintenanceRestartRequired
+	}
 	target := strings.TrimPrefix(strings.TrimSpace(version), "v")
 	if target == "" {
 		return ErrRollbackVersionNotAllowed
@@ -357,13 +432,17 @@ func (s *UpdateService) RollbackToVersion(ctx context.Context, version string) e
 		}
 	}
 
-	return s.applyReleaseAssets(ctx, assets)
+	if err := s.applyReleaseAssets(ctx, target, assets); err != nil {
+		return err
+	}
+	s.pendingVersion.Store(&target)
+	return nil
 }
 
 // fetchRollbackCandidates fetches recent releases and keeps the newest
 // maxRollbackVersions entries strictly older than the current version.
 func (s *UpdateService) fetchRollbackCandidates(ctx context.Context) ([]*GitHubRelease, error) {
-	releases, err := s.githubClient.FetchRecentReleases(ctx, githubRepo, rollbackFetchPageSize)
+	releases, err := s.githubClient.FetchRecentReleases(ctx, s.source.Repository, rollbackFetchPageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -375,6 +454,9 @@ func (s *UpdateService) fetchRollbackCandidates(ctx context.Context) ([]*GitHubR
 			continue
 		}
 		v := strings.TrimPrefix(r.TagName, "v")
+		if _, _, stable := parseMaintenanceVersion(v); !stable {
+			continue
+		}
 		if v == "" || seen[v] {
 			continue
 		}
@@ -383,6 +465,13 @@ func (s *UpdateService) fetchRollbackCandidates(ctx context.Context) ([]*GitHubR
 			continue
 		}
 		seen[v] = true
+		assets := make([]Asset, 0, len(r.Assets))
+		for _, a := range r.Assets {
+			assets = append(assets, Asset{Name: a.Name, DownloadURL: a.BrowserDownloadURL, Size: a.Size})
+		}
+		if _, err := s.fetchMaintenanceManifest(ctx, v, assets); err != nil {
+			continue
+		}
 		candidates = append(candidates, r)
 	}
 
@@ -400,12 +489,18 @@ func (s *UpdateService) fetchRollbackCandidates(ctx context.Context) ([]*GitHubR
 }
 
 func (s *UpdateService) fetchLatestRelease(ctx context.Context) (*UpdateInfo, error) {
-	release, err := s.githubClient.FetchLatestRelease(ctx, githubRepo)
+	release, err := s.githubClient.FetchLatestRelease(ctx, s.source.Repository)
 	if err != nil {
 		return nil, err
 	}
+	if release == nil || release.Draft || release.Prerelease {
+		return nil, fmt.Errorf("no stable Fork release is available")
+	}
 
 	latestVersion := strings.TrimPrefix(release.TagName, "v")
+	if _, _, stable := parseMaintenanceVersion(latestVersion); !stable {
+		return nil, fmt.Errorf("latest release is not a stable Fork maintenance version")
+	}
 
 	assets := make([]Asset, len(release.Assets))
 	for i, a := range release.Assets {
@@ -415,8 +510,12 @@ func (s *UpdateService) fetchLatestRelease(ctx context.Context) (*UpdateInfo, er
 			Size:        a.Size,
 		}
 	}
+	if _, err := s.fetchMaintenanceManifest(ctx, latestVersion, assets); err != nil {
+		return nil, err
+	}
 
 	return &UpdateInfo{
+		Source:         s.source,
 		CurrentVersion: s.currentVersion,
 		LatestVersion:  latestVersion,
 		HasUpdate:      compareVersions(s.currentVersion, latestVersion) < 0,
@@ -594,18 +693,28 @@ func (s *UpdateService) extractBinary(archivePath, destPath string) error {
 }
 
 func (s *UpdateService) getFromCache(ctx context.Context) (*UpdateInfo, error) {
+	if s.cache == nil {
+		return nil, fmt.Errorf("update cache is unavailable")
+	}
 	data, err := s.cache.GetUpdateInfo(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	var cached struct {
-		Latest      string       `json:"latest"`
-		ReleaseInfo *ReleaseInfo `json:"release_info"`
-		Timestamp   int64        `json:"timestamp"`
+		Source      MaintenanceSource `json:"source"`
+		Latest      string            `json:"latest"`
+		ReleaseInfo *ReleaseInfo      `json:"release_info"`
+		Timestamp   int64             `json:"timestamp"`
 	}
 	if err := json.Unmarshal([]byte(data), &cached); err != nil {
 		return nil, err
+	}
+	if cached.Source != s.source {
+		return nil, fmt.Errorf("cached update source is incompatible")
+	}
+	if _, _, stable := parseMaintenanceVersion(cached.Latest); !stable {
+		return nil, fmt.Errorf("cached release is not a stable maintenance version")
 	}
 
 	if time.Now().Unix()-cached.Timestamp > updateCacheTTL {
@@ -613,6 +722,7 @@ func (s *UpdateService) getFromCache(ctx context.Context) (*UpdateInfo, error) {
 	}
 
 	return &UpdateInfo{
+		Source:         s.source,
 		CurrentVersion: s.currentVersion,
 		LatestVersion:  cached.Latest,
 		HasUpdate:      compareVersions(s.currentVersion, cached.Latest) < 0,
@@ -623,11 +733,16 @@ func (s *UpdateService) getFromCache(ctx context.Context) (*UpdateInfo, error) {
 }
 
 func (s *UpdateService) saveToCache(ctx context.Context, info *UpdateInfo) {
+	if s.cache == nil {
+		return
+	}
 	cacheData := struct {
-		Latest      string       `json:"latest"`
-		ReleaseInfo *ReleaseInfo `json:"release_info"`
-		Timestamp   int64        `json:"timestamp"`
+		Source      MaintenanceSource `json:"source"`
+		Latest      string            `json:"latest"`
+		ReleaseInfo *ReleaseInfo      `json:"release_info"`
+		Timestamp   int64             `json:"timestamp"`
 	}{
+		Source:      s.source,
 		Latest:      info.LatestVersion,
 		ReleaseInfo: info.ReleaseInfo,
 		Timestamp:   time.Now().Unix(),
@@ -639,31 +754,5 @@ func (s *UpdateService) saveToCache(ctx context.Context, info *UpdateInfo) {
 
 // compareVersions compares two semantic versions
 func compareVersions(current, latest string) int {
-	currentParts := parseVersion(current)
-	latestParts := parseVersion(latest)
-
-	for i := 0; i < 3; i++ {
-		if currentParts[i] < latestParts[i] {
-			return -1
-		}
-		if currentParts[i] > latestParts[i] {
-			return 1
-		}
-	}
-	return 0
-}
-
-func parseVersion(v string) [3]int {
-	v = strings.TrimPrefix(v, "v")
-	if idx := strings.IndexByte(v, '-'); idx != -1 {
-		v = v[:idx]
-	}
-	parts := strings.Split(v, ".")
-	result := [3]int{0, 0, 0}
-	for i := 0; i < len(parts) && i < 3; i++ {
-		if parsed, err := strconv.Atoi(parts[i]); err == nil {
-			result[i] = parsed
-		}
-	}
-	return result
+	return maintenanceVersionCompare(current, latest)
 }

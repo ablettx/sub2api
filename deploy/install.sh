@@ -2,7 +2,7 @@
 #
 # Sub2API Installation Script
 # Sub2API 安装脚本
-# Usage: curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/ablettx/sub2api/main/deploy/install.sh | bash
 #
 
 set -e
@@ -31,7 +31,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-GITHUB_REPO="Wei-Shaw/sub2api"
+GITHUB_REPO="ablettx/sub2api"
 INSTALL_DIR="/opt/sub2api"
 SERVICE_NAME="sub2api"
 SERVICE_USER="sub2api"
@@ -464,6 +464,9 @@ detect_platform() {
 # Check dependencies
 check_dependencies() {
     local missing=()
+    if ! command -v python3 &> /dev/null; then
+        missing+=("python3")
+    fi
 
     if ! command -v curl &> /dev/null; then
         missing+=("curl")
@@ -579,6 +582,10 @@ validate_version() {
     if [[ ! "$version" =~ ^v ]]; then
         version="v$version"
     fi
+    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-ablett\.[1-9][0-9]*$ ]]; then
+        print_error "Only stable Fork maintenance versions (vX.Y.Z-ablett.N) are supported" >&2
+        exit 1
+    fi
 
     print_info "$(msg 'validating_version') $version" >&2
 
@@ -607,7 +614,7 @@ validate_version() {
 get_current_version() {
     if [ -f "$INSTALL_DIR/sub2api" ]; then
         # Use grep -E for better compatibility (works on macOS and Linux)
-        "$INSTALL_DIR/sub2api" --version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "unknown"
+        "$INSTALL_DIR/sub2api" --version 2>&1 | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+(-ablett\.[0-9]+)?' | head -1 || echo "unknown"
     else
         echo "not_installed"
     fi
@@ -615,10 +622,15 @@ get_current_version() {
 
 # Download and extract
 download_and_extract() {
+    if [[ ! "$LATEST_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-ablett\.[1-9][0-9]*$ ]]; then
+        print_error "No stable Fork maintenance release is available"
+        exit 1
+    fi
     local version_num=${LATEST_VERSION#v}
     local archive_name="sub2api_${version_num}_${OS}_${ARCH}.tar.gz"
     local download_url="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_VERSION}/${archive_name}"
     local checksum_url="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_VERSION}/checksums.txt"
+    local manifest_url="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_VERSION}/manifest-${OS}-${ARCH}.json"
 
     print_info "$(msg 'downloading') ${archive_name}..."
 
@@ -627,14 +639,14 @@ download_and_extract() {
     trap "rm -rf $TEMP_DIR" EXIT
 
     # Download archive
-    if ! curl -sL "$download_url" -o "$TEMP_DIR/$archive_name"; then
+    if ! curl -fsSL --connect-timeout 10 --max-time 300 "$download_url" -o "$TEMP_DIR/$archive_name"; then
         print_error "$(msg 'download_failed')"
         exit 1
     fi
 
     # Download and verify checksum
     print_info "$(msg 'verifying_checksum')"
-    if curl -sL "$checksum_url" -o "$TEMP_DIR/checksums.txt" 2>/dev/null; then
+    if curl -fsSL --connect-timeout 10 --max-time 30 "$checksum_url" -o "$TEMP_DIR/checksums.txt" 2>/dev/null; then
         local expected_checksum=$(grep "$archive_name" "$TEMP_DIR/checksums.txt" | awk '{print $1}')
         local actual_checksum=$(sha256sum "$TEMP_DIR/$archive_name" | awk '{print $1}')
 
@@ -646,8 +658,18 @@ download_and_extract() {
         fi
         print_success "$(msg 'checksum_verified')"
     else
-        print_warning "$(msg 'checksum_not_found')"
+        print_error "$(msg 'checksum_not_found')"
+        exit 1
     fi
+
+    curl -fsSL --connect-timeout 10 --max-time 30 "$manifest_url" -o "$TEMP_DIR/manifest.json" || exit 1
+    if [ -f "$INSTALL_DIR/sub2api" ]; then
+        if ! "$INSTALL_DIR/sub2api" --maintenance-info > "$TEMP_DIR/current.json" 2>/dev/null; then
+            print_error "Current installation has no Fork compatibility metadata. Use the documented first-adoption procedure."
+            exit 1
+        fi
+    fi
+    verify_maintenance_package "$TEMP_DIR" "$version_num" "$OS" "$ARCH" "$archive_name" || exit 1
 
     # Extract
     print_info "$(msg 'extracting')"
@@ -656,9 +678,26 @@ download_and_extract() {
     # Create install directory
     mkdir -p "$INSTALL_DIR"
 
-    # Copy binary
-    cp "$TEMP_DIR/sub2api" "$INSTALL_DIR/sub2api"
-    chmod +x "$INSTALL_DIR/sub2api"
+    # Validate everything before stopping the service or replacing its binary.
+    cp "$TEMP_DIR/sub2api" "$INSTALL_DIR/.sub2api-installing"
+    chmod +x "$INSTALL_DIR/.sub2api-installing"
+    if [ -f "$INSTALL_DIR/sub2api" ]; then
+        if systemctl is-active --quiet sub2api; then systemctl stop sub2api; fi
+        cp "$INSTALL_DIR/sub2api" "$INSTALL_DIR/sub2api.backup"
+        python3 - "$TEMP_DIR/current.json" "$INSTALL_DIR/sub2api.backup" <<'PY'
+import hashlib, json, pathlib, sys
+def digest_stream(stream):
+    h=hashlib.sha256()
+    for chunk in iter(lambda: stream.read(1024 * 1024), b''): h.update(chunk)
+    return h.hexdigest()
+manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())
+with open(sys.argv[2], 'rb') as stream:
+    digest = digest_stream(stream)
+manifest.update(sha256=digest, binary_sha256=digest, archive='backup')
+pathlib.Path(sys.argv[2] + '.json').write_text(json.dumps({'manifest': manifest, 'binary_sha256': digest}))
+PY
+    fi
+    mv -f "$INSTALL_DIR/.sub2api-installing" "$INSTALL_DIR/sub2api"
 
     # Copy deploy files if they exist in the archive
     if [ -d "$TEMP_DIR/deploy" ]; then
@@ -666,6 +705,52 @@ download_and_extract() {
     fi
 
     print_success "$(msg 'binary_installed') $INSTALL_DIR/sub2api"
+}
+
+# Strict JSON parsing and migration comparison keep recovery on the Fork channel.
+verify_maintenance_package() {
+    python3 - "$@" <<'PY'
+import hashlib, json, pathlib, re, sys, tarfile
+def require(condition, message):
+    if not condition: raise ValueError(message)
+def digest_stream(stream):
+    h=hashlib.sha256()
+    for chunk in iter(lambda: stream.read(1024 * 1024), b''): h.update(chunk)
+    return h.hexdigest()
+def maintenance_version(v):
+    match=re.fullmatch(r'(\d+)\.(\d+)\.(\d+)-ablett\.([1-9][0-9]*)',v)
+    require(match, 'invalid maintenance version')
+    return tuple(map(int,match.groups()))
+directory, version, goos, goarch, name = sys.argv[1:]
+root = pathlib.Path(directory)
+m = json.loads((root / 'manifest.json').read_text())
+match = re.fullmatch(r'(\d+\.\d+\.\d+)-ablett\.([1-9][0-9]*)', version)
+require(match and m['schema_version'] == 1 and m['source'] == 'ablettx/sub2api' and m['channel'] == 'stable', 'invalid release source')
+require(m['version'] == version and m['upstream_version'] == match[1] and m['revision'] == int(match[2]), 'invalid version')
+require(m['target'] == {'goos': goos, 'goarch': goarch} and m['archive'] == name, 'wrong platform')
+require(m['capabilities'].get('account_user_quota', 0) >= 1 and m['database_min'] <= 1 <= m['database_max'], 'incompatible quota schema')
+require(re.fullmatch('[a-f0-9]{40}', m['sha']), 'invalid source commit')
+require(maintenance_version(version) >= maintenance_version(m['rollback_floor']), 'release below rollback floor')
+with (root / name).open('rb') as stream:
+    require(digest_stream(stream) == m['sha256'], 'archive checksum mismatch')
+with tarfile.open(root / name, 'r:gz') as archive:
+    for member in archive.getmembers():
+        path = pathlib.PurePosixPath(member.name)
+        require(not path.is_absolute() and '..' not in path.parts and (member.isfile() or member.isdir()), 'unsafe archive')
+        require(member.size <= 500 * 1024 * 1024, 'archive entry too large')
+    binaries = [member for member in archive.getmembers() if member.name in ('sub2api', './sub2api') and member.isfile()]
+    require(len(binaries) == 1, 'binary missing or duplicated')
+    with archive.extractfile(binaries[0]) as stream:
+        require(digest_stream(stream) == m['binary_sha256'], 'binary checksum mismatch')
+current = root / 'current.json'
+if current.exists():
+    c = json.loads(current.read_text())
+    require(c['source'] == m['source'] and c['capabilities'].get('account_user_quota', 0) >= 1, 'current installation is not a compatible Fork build')
+    require(maintenance_version(version) >= maintenance_version(c['rollback_floor']), 'release below current rollback floor')
+    require(re.fullmatch('[a-f0-9]{40}', c['sha']), 'current build has no verified source commit')
+    for filename, checksum in c['migrations'].items():
+        require(m['migrations'].get(filename) == checksum, 'incompatible database migration: ' + filename)
+PY
 }
 
 # Create system user
@@ -863,18 +948,8 @@ upgrade() {
     print_info "$(msg 'upgrading')"
 
     # Get current version
-    CURRENT_VERSION=$("$INSTALL_DIR/sub2api" --version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' || echo "unknown")
+    CURRENT_VERSION=$(get_current_version)
     print_info "$(msg 'current_version'): $CURRENT_VERSION"
-
-    # Stop service
-    if systemctl is-active --quiet sub2api; then
-        print_info "$(msg 'stopping_service')"
-        systemctl stop sub2api
-    fi
-
-    # Backup current binary
-    cp "$INSTALL_DIR/sub2api" "$INSTALL_DIR/sub2api.backup"
-    print_info "$(msg 'backup_created'): $INSTALL_DIR/sub2api.backup"
 
     # Download and install new version
     get_latest_version
@@ -916,12 +991,6 @@ install_version() {
     if [ "$current_version" = "$target_version" ] || [ "$current_version" = "${target_version#v}" ]; then
         print_warning "$(msg 'same_version')"
         exit 0
-    fi
-
-    # Stop service if running
-    if systemctl is-active --quiet sub2api; then
-        print_info "$(msg 'stopping_service')"
-        systemctl stop sub2api
     fi
 
     # Backup current binary (for potential recovery)

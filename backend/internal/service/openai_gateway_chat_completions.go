@@ -53,7 +53,7 @@ var cursorResponsesUnsupportedFields = []string{
 //     直转原生 CC，anthropic 走原生 Anthropic，responses 走 Responses
 //   - 其他 APIKey 账号仍按覆盖模式/探测标记分流（详见
 //     openai_compat.ShouldUseResponsesAPI）
-func (s *OpenAIGatewayService) ForwardAsChatCompletions(
+func (s *OpenAIGatewayService) forwardAsChatCompletionsWithoutUserQuota(
 	ctx context.Context,
 	c *gin.Context,
 	account *Account,

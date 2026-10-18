@@ -73,16 +73,19 @@ type usageLogBestEffortWriter interface {
 
 // postUsageBillingParams 统一扣费所需的参数
 type postUsageBillingParams struct {
-	Cost                  *CostBreakdown
-	User                  *User
-	APIKey                *APIKey
-	Account               *Account
-	Subscription          *UserSubscription
-	RequestPayloadHash    string
-	IsSubscriptionBill    bool
-	AccountRateMultiplier float64
-	APIKeyService         APIKeyQuotaUpdater
-	Platform              string // 来自 APIKey 关联 Group 的平台标识
+	Cost                          *CostBreakdown
+	User                          *User
+	APIKey                        *APIKey
+	Account                       *Account
+	Subscription                  *UserSubscription
+	RequestPayloadHash            string
+	IsSubscriptionBill            bool
+	AccountRateMultiplier         float64
+	APIKeyService                 APIKeyQuotaUpdater
+	Platform                      string // 来自 APIKey 关联 Group 的平台标识
+	AccountUserQuotaTracking      bool
+	AccountUserQuotaReservation   *AccountUserQuotaReservation
+	AccountUserExecutionStartedAt time.Time
 	// SimpleModeKeyRateLimitOnly opts the request into the simple-mode billing
 	// path that records only API-key 5h/1d/7d window usage. It must not trigger
 	// balance, subscription, account, platform, or lifetime-key-quota effects.
@@ -292,14 +295,26 @@ func buildUsageBillingCommand(requestID string, usageLog *UsageLog, p *postUsage
 	}
 
 	cmd := &UsageBillingCommand{
-		RequestID:          requestID,
-		APIKeyID:           p.APIKey.ID,
-		UserID:             p.User.ID,
-		AccountID:          p.Account.ID,
-		AccountType:        p.Account.Type,
-		RequestPayloadHash: strings.TrimSpace(p.RequestPayloadHash),
+		RequestID:                     requestID,
+		APIKeyID:                      p.APIKey.ID,
+		UserID:                        p.User.ID,
+		AccountID:                     p.Account.ID,
+		AccountType:                   p.Account.Type,
+		RequestPayloadHash:            strings.TrimSpace(p.RequestPayloadHash),
+		AccountUserQuotaTracking:      p.AccountUserQuotaTracking,
+		AccountUserQuotaReservation:   p.AccountUserQuotaReservation,
+		AccountUserExecutionStartedAt: p.AccountUserExecutionStartedAt,
+		AccountUserActualCost:         p.Cost.ActualCost,
 	}
 	if usageLog != nil {
+		statsCost := usageLog.TotalCost
+		if usageLog.AccountStatsCost != nil {
+			statsCost = *usageLog.AccountStatsCost
+		}
+		if usageLog.AccountRateMultiplier != nil {
+			statsCost *= *usageLog.AccountRateMultiplier
+		}
+		cmd.AccountUserStatsCost = statsCost
 		cmd.Model = usageLog.Model
 		cmd.BillingType = usageLog.BillingType
 		cmd.InputTokens = usageLog.InputTokens
@@ -358,6 +373,9 @@ func applyUsageBilling(ctx context.Context, requestID string, usageLog *UsageLog
 
 	cmd := buildUsageBillingCommand(requestID, usageLog, p)
 	if cmd == nil || cmd.RequestID == "" || repo == nil {
+		if p.AccountUserQuotaReservation != nil {
+			return false, NewAccountUserQuotaError(AccountUserQuotaUnavailable, "Atomic account quota billing is unavailable")
+		}
 		if p.SimpleModeKeyRateLimitOnly {
 			return false, ErrSimpleModeKeyRateLimitBillingUnavailable
 		}
@@ -373,6 +391,9 @@ func applyUsageBilling(ctx context.Context, requestID string, usageLog *UsageLog
 	result, err := repo.Apply(billingCtx, cmd)
 	if err != nil {
 		return false, err
+	}
+	if result != nil && usageLog != nil && result.AccountUserQuotaCycleID != nil {
+		usageLog.AccountUserQuotaCycleID = result.AccountUserQuotaCycleID
 	}
 
 	if result == nil || !result.Applied {

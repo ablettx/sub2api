@@ -70,6 +70,16 @@ func AccountID(v int64) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldAccountID, v))
 }
 
+// AccountUserQuotaCycleID applies equality check predicate on the "account_user_quota_cycle_id" field. It's identical to AccountUserQuotaCycleIDEQ.
+func AccountUserQuotaCycleID(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldAccountUserQuotaCycleID, v))
+}
+
+// OriginalGroupID applies equality check predicate on the "original_group_id" field. It's identical to OriginalGroupIDEQ.
+func OriginalGroupID(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldOriginalGroupID, v))
+}
+
 // RequestID applies equality check predicate on the "request_id" field. It's identical to RequestIDEQ.
 func RequestID(v string) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldRequestID, v))
@@ -343,6 +353,106 @@ func AccountIDIn(vs ...int64) predicate.UsageLog {
 // AccountIDNotIn applies the NotIn predicate on the "account_id" field.
 func AccountIDNotIn(vs ...int64) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldNotIn(FieldAccountID, vs...))
+}
+
+// AccountUserQuotaCycleIDEQ applies the EQ predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDEQ(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldAccountUserQuotaCycleID, v))
+}
+
+// AccountUserQuotaCycleIDNEQ applies the NEQ predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDNEQ(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldAccountUserQuotaCycleID, v))
+}
+
+// AccountUserQuotaCycleIDIn applies the In predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDIn(vs ...int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldAccountUserQuotaCycleID, vs...))
+}
+
+// AccountUserQuotaCycleIDNotIn applies the NotIn predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDNotIn(vs ...int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldAccountUserQuotaCycleID, vs...))
+}
+
+// AccountUserQuotaCycleIDGT applies the GT predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDGT(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldAccountUserQuotaCycleID, v))
+}
+
+// AccountUserQuotaCycleIDGTE applies the GTE predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDGTE(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldAccountUserQuotaCycleID, v))
+}
+
+// AccountUserQuotaCycleIDLT applies the LT predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDLT(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldAccountUserQuotaCycleID, v))
+}
+
+// AccountUserQuotaCycleIDLTE applies the LTE predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDLTE(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldAccountUserQuotaCycleID, v))
+}
+
+// AccountUserQuotaCycleIDIsNil applies the IsNil predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDIsNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIsNull(FieldAccountUserQuotaCycleID))
+}
+
+// AccountUserQuotaCycleIDNotNil applies the NotNil predicate on the "account_user_quota_cycle_id" field.
+func AccountUserQuotaCycleIDNotNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotNull(FieldAccountUserQuotaCycleID))
+}
+
+// OriginalGroupIDEQ applies the EQ predicate on the "original_group_id" field.
+func OriginalGroupIDEQ(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldOriginalGroupID, v))
+}
+
+// OriginalGroupIDNEQ applies the NEQ predicate on the "original_group_id" field.
+func OriginalGroupIDNEQ(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldOriginalGroupID, v))
+}
+
+// OriginalGroupIDIn applies the In predicate on the "original_group_id" field.
+func OriginalGroupIDIn(vs ...int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldOriginalGroupID, vs...))
+}
+
+// OriginalGroupIDNotIn applies the NotIn predicate on the "original_group_id" field.
+func OriginalGroupIDNotIn(vs ...int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldOriginalGroupID, vs...))
+}
+
+// OriginalGroupIDGT applies the GT predicate on the "original_group_id" field.
+func OriginalGroupIDGT(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldOriginalGroupID, v))
+}
+
+// OriginalGroupIDGTE applies the GTE predicate on the "original_group_id" field.
+func OriginalGroupIDGTE(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldOriginalGroupID, v))
+}
+
+// OriginalGroupIDLT applies the LT predicate on the "original_group_id" field.
+func OriginalGroupIDLT(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldOriginalGroupID, v))
+}
+
+// OriginalGroupIDLTE applies the LTE predicate on the "original_group_id" field.
+func OriginalGroupIDLTE(v int64) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldOriginalGroupID, v))
+}
+
+// OriginalGroupIDIsNil applies the IsNil predicate on the "original_group_id" field.
+func OriginalGroupIDIsNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIsNull(FieldOriginalGroupID))
+}
+
+// OriginalGroupIDNotNil applies the NotNil predicate on the "original_group_id" field.
+func OriginalGroupIDNotNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotNull(FieldOriginalGroupID))
 }
 
 // RequestIDEQ applies the EQ predicate on the "request_id" field.

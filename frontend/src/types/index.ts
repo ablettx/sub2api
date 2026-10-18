@@ -1453,6 +1453,10 @@ export interface GrokBillingSummary {
 }
 
 export interface AccountUsageInfo {
+  openai_seven_day_estimated_total_cost?: number | null
+  quota_estimate_state?: 'current' | 'carryover' | 'initializing' | 'unavailable'
+  quota_estimate_at?: string | null
+  quota_estimate_expires_at?: string | null
   source?: 'passive' | 'active'
   updated_at: string | null
   five_hour: UsageProgress | null

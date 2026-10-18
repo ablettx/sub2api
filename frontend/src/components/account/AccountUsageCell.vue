@@ -144,6 +144,9 @@
           :show-now-when-idle="true"
           color="emerald"
         />
+        <p v-if="usageInfo?.quota_estimate_state && usageInfo.quota_estimate_state !== 'current'" class="text-[10px] text-amber-600 dark:text-amber-400">
+          {{ t(`admin.accounts.userQuota.states.${usageInfo.quota_estimate_state}`) }}
+        </p>
         <!--
           Upstream codex /wham/usage quota query + reset. The local active-sampling
           refresh button is rendered via the pre-actions slot so the user sees a
@@ -827,22 +830,9 @@ const hasOpenAIUsageFallback = computed(() => {
 })
 
 const openAISevenDayEstimatedTotalCost = computed(() => {
-  const sevenDay = usageInfo.value?.seven_day
-  const utilization = sevenDay?.utilization
-  const currentCost = sevenDay?.window_stats?.cost
-  if (
-    typeof utilization !== 'number' ||
-    typeof currentCost !== 'number' ||
-    !Number.isFinite(utilization) ||
-    !Number.isFinite(currentCost) ||
-    utilization <= 0 ||
-    currentCost <= 0
-  ) {
-    return null
-  }
-
-  const estimate = (currentCost * 100) / utilization
-  return Number.isFinite(estimate) && estimate > 0 ? estimate : null
+  if (usageInfo.value?.quota_estimate_state === 'unavailable' || usageInfo.value?.quota_estimate_state === 'initializing') return null
+  const estimate = usageInfo.value?.openai_seven_day_estimated_total_cost
+  return typeof estimate === 'number' && Number.isFinite(estimate) && estimate > 0 ? estimate : null
 })
 
 const openAIUsageRefreshKey = computed(() => buildOpenAIUsageRefreshKey(props.account))

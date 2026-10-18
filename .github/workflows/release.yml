@@ -60,6 +60,11 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r "$RUNNER_TEMP/release-tools/requirements-release.txt"
+      - name: Verify maintenance installer and release metadata
+        run: |
+          python -m unittest discover -s "$RUNNER_TEMP/release-tools" -p test_release_matrix.py
+          python deploy/tests/install-maintenance-test.py
+          bash -n deploy/install.sh
       - name: Resolve one source commit and target matrix
         id: plan
         env:
@@ -96,6 +101,9 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - name: Verify quota management and unified estimate
+        run: pnpm exec vitest run src/components/account/__tests__/AccountUserQuotaPanel.spec.ts src/components/account/__tests__/AccountUsageCell.spec.ts src/components/account/__tests__/UsageProgressBar.spec.ts --maxWorkers=2 --minWorkers=1
         working-directory: frontend
       - run: pnpm run build
         working-directory: frontend
@@ -138,6 +146,14 @@ jobs:
           cache: false
       - name: Verify Go version
         run: go version | grep -q 'go1.27.2'
+      - name: Verify quota accounting and maintenance compatibility
+        if: matrix.goos == 'linux' && matrix.goarch == 'amd64'
+        working-directory: backend
+        env:
+          GOMAXPROCS: '2'
+        run: |
+          go test -p 2 -tags=unit ./internal/service ./internal/handler/... -run 'Test(AccountUserQuota|MaintenanceRelease|UpdateService)' -count=1
+          go test -p 2 -tags=integration ./internal/repository -run '^TestAccountUserQuota' -count=1
       - name: Restore target-specific Go cache
         id: go-cache
         uses: actions/cache/restore@v6

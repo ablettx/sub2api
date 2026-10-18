@@ -213,6 +213,11 @@ func (h *SystemHandler) RestartService(c *gin.Context) {
 			release("", succeeded)
 		}()
 
+		if gate, ok := h.updateSvc.(interface{ PrepareRestart(context.Context) error }); ok {
+			if err := gate.PrepareRestart(ctx); err != nil {
+				return nil, err
+			}
+		}
 		// Schedule service restart in background after sending response
 		// This ensures the client receives the success response before the service restarts
 		go func() {

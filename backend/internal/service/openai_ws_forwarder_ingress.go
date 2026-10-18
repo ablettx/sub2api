@@ -62,7 +62,7 @@ func newOpenAIWSDownstreamWriteContext(controlCtx context.Context, hooks *OpenAI
 	return context.WithTimeout(writeParent, timeout)
 }
 
-func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
+func (s *OpenAIGatewayService) proxyResponsesWebSocketWithoutUserQuota(
 	ctx context.Context,
 	c *gin.Context,
 	clientConn *coderws.Conn,
@@ -583,6 +583,7 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 		bridgeReplayInputExists := false
 		var bridgeAccountFailoverInput []json.RawMessage
 		bridgeAccountFailoverInputExists := false
+		bridgeLastResponseID := ""
 		for turn := 1; ; turn++ {
 			if turn > 1 && hooks != nil && hooks.BeforeRequest != nil {
 				if err := hooks.BeforeRequest(turn, currentBridgePayload.rawForHash, currentBridgePayload.originalModel); err != nil {
@@ -591,7 +592,8 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 			}
 			if hooks != nil && hooks.BeforeTurn != nil {
 				if err := hooks.BeforeTurn(turn); err != nil {
-					return err
+					return accountUserQuotaWSTurnRejection(ctx, clientConn, err, currentBridgePayload.accountIdentitySourceRaw,
+						bridgeAccountFailoverInput, bridgeAccountFailoverInputExists, bridgeLastResponseID, currentBridgePayload.originalModel)
 				}
 			}
 			if turnState != "" && c != nil && c.Request != nil {
@@ -728,6 +730,7 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 				bridgeReplayInputExists = true
 			}
 			bridgeAccountFailoverInput = turnAccountFailoverInput
+			bridgeLastResponseID = result.ResponseID
 			bridgeAccountFailoverInputExists = turnAccountFailoverInputExists
 			if len(result.wsAccountFailoverReplayInput) > 0 {
 				bridgeAccountFailoverInput = combineOpenAIWSReplayItems(
@@ -963,6 +966,9 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 		}
 		turnStart := time.Now()
 		wroteDownstream := false
+		if err := markAccountUserQuotaSent(ctx, c); err != nil {
+			return nil, err
+		}
 		if err := lease.WriteJSONWithContextTimeout(ctx, json.RawMessage(payload), s.openAIWSWriteTimeout()); err != nil {
 			return nil, wrapOpenAIWSIngressTurnError(
 				"write_upstream",
@@ -1469,7 +1475,8 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 		}
 		if !skipBeforeTurn && hooks != nil && hooks.BeforeTurn != nil {
 			if err := hooks.BeforeTurn(turn); err != nil {
-				return err
+				return accountUserQuotaWSTurnRejection(ctx, clientConn, err, currentClientPayload,
+					lastTurnReplayInput, lastTurnReplayInputExists, lastTurnResponseID, currentOriginalModel)
 			}
 		}
 		skipBeforeTurn = false

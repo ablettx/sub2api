@@ -2,10 +2,10 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
@@ -117,7 +117,7 @@ func executeAdminIdempotentJSONWithMode(
 ) {
 	result, err := executeAdminIdempotentWithTimeout(c, scope, payload, ttl, executionTimeout, execute)
 	if err != nil {
-		if infraerrors.Code(err) == infraerrors.Code(service.ErrIdempotencyStoreUnavail) {
+		if errors.Is(err, service.ErrIdempotencyStoreUnavail) {
 			strategy := "fail_close"
 			if mode == idempotencyStoreUnavailableFailOpen {
 				strategy = "fail_open"

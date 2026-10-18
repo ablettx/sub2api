@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"syscall"
 	"time"
 )
 
@@ -32,7 +33,13 @@ func RestartService() error {
 	// Give a moment for logs to flush and response to be sent
 	go func() {
 		time.Sleep(100 * time.Millisecond)
-		os.Exit(0)
+		process, err := os.FindProcess(os.Getpid())
+		if err == nil {
+			err = process.Signal(syscall.SIGTERM)
+		}
+		if err != nil {
+			log.Printf("Failed to request graceful restart: %v", err)
+		}
 	}()
 
 	return nil

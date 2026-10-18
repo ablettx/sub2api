@@ -57,6 +57,11 @@
           </div>
 
           <div class="p-4">
+            <div v-if="appStore.updateSource" class="mb-3 space-y-1 text-xs text-gray-500 dark:text-dark-400">
+              <p>{{ t('version.releaseSource') }}: {{ appStore.updateSource.repository }} · {{ appStore.updateSource.channel }}</p>
+              <p>{{ t('version.upstreamSource') }}: {{ appStore.updateSource.upstream_repository }}</p>
+            </div>
+            <p v-if="appStore.updateWarning" role="alert" class="mb-3 text-xs text-amber-600">{{ appStore.updateWarning }}</p>
             <!-- Loading state -->
             <div v-if="loading" class="flex items-center justify-center py-6">
               <svg class="h-6 w-6 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24">
@@ -638,7 +643,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
@@ -651,9 +656,6 @@ import {
 import { useClipboard } from '@/composables/useClipboard'
 import Icon from '@/components/icons/Icon.vue'
 
-const GITHUB_REPO = 'Wei-Shaw/sub2api'
-// Docker Hub image published by CI (tags carry no "v" prefix, e.g. weishaw/sub2api:0.1.146)
-const DOCKER_IMAGE = 'weishaw/sub2api'
 
 const { t } = useI18n()
 
@@ -663,6 +665,8 @@ const props = defineProps<{
 
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const updateRepository = computed(() => appStore.updateSource?.repository || '')
+const updateImage = computed(() => appStore.updateSource?.image || '')
 
 const isAdmin = computed(() => authStore.isAdmin)
 
@@ -681,6 +685,7 @@ const buildType = computed(() => appStore.buildType)
 const updating = ref(false)
 const restarting = ref(false)
 const needRestart = ref(false)
+watch(() => appStore.maintenanceRestartRequired, value => { if (value) needRestart.value = true }, { immediate: true })
 const updateError = ref('')
 const updateSuccess = ref(false)
 const restartCountdown = ref(0)
@@ -708,16 +713,16 @@ const manualTabs = computed(() => [
 ])
 
 const scriptRollbackCommand = computed(() => {
-  if (!selectedRollbackVersion.value) return ''
+  if (!selectedRollbackVersion.value || !updateRepository.value) return ''
   const tag = `v${selectedRollbackVersion.value}`
-  return `curl -sSL https://raw.githubusercontent.com/${GITHUB_REPO}/${tag}/deploy/install.sh | sudo bash -s -- rollback ${tag}`
+  return `curl -fsSL https://raw.githubusercontent.com/${updateRepository.value}/${tag}/deploy/install.sh | sudo bash -s -- rollback ${tag}`
 })
 
 const dockerRollbackCommand = computed(() => {
-  if (!selectedRollbackVersion.value) return ''
+  if (!selectedRollbackVersion.value || !updateImage.value) return ''
   return [
     `# ${t('version.dockerEditCompose')}`,
-    `image: ${DOCKER_IMAGE}:${selectedRollbackVersion.value}`,
+    `image: ${updateImage.value}:${selectedRollbackVersion.value}`,
     '',
     `# ${t('version.dockerRecreate')}`,
     'docker compose up -d'

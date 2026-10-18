@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import tarfile
+import zipfile
 from datetime import datetime, timezone
 
 import yaml
@@ -18,6 +19,48 @@ FULL_CONFIG = Path('.goreleaser.yaml')
 SIMPLE_CONFIG = Path('.goreleaser.simple.yaml')
 VERSION_FILE = Path('backend/cmd/server/VERSION')
 VERSION_RE = re.compile(r'\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?')
+MAINTENANCE_RE = re.compile(r'(\d+\.\d+\.\d+)-ablett\.([1-9][0-9]*)(?:-(.+))?')
+SOURCE = 'ablettx/sub2api'
+ROLLBACK_FLOOR = '0.2.17-ablett.1'
+
+
+def maintenance_parts(version):
+    match = MAINTENANCE_RE.fullmatch(version)
+    if not match:
+        raise ValueError('Fork release requires X.Y.Z-ablett.N version')
+    return match.group(1), int(match.group(2)), match.group(3) is None
+
+
+def migration_checksums():
+    return {p.name: hashlib.sha256(p.read_text().strip().encode()).hexdigest()
+            for p in sorted(Path('backend/migrations').glob('*.sql')) if p.read_text().strip()}
+
+
+def binary_sha256(archive, target):
+    name = 'sub2api.exe' if target['goos'] == 'windows' else 'sub2api'
+    if target['goos'] == 'windows':
+        with zipfile.ZipFile(archive) as zf:
+            entries = [entry for entry in zf.infolist() if entry.filename in (name, './' + name)]
+            if len(entries) != 1 or entries[0].is_dir():
+                raise ValueError('archive requires one regular binary')
+            return hashlib.sha256(zf.read(entries[0])).hexdigest()
+    with tarfile.open(archive, 'r:gz') as tf:
+        entries = [entry for entry in tf.getmembers() if entry.name in (name, './' + name)]
+        if len(entries) != 1 or not entries[0].isfile():
+            raise ValueError('archive requires one regular binary')
+        with tf.extractfile(entries[0]) as stream:
+            return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def manifest_metadata(version, sha, target, name, digest, binary_digest):
+    base, revision, stable = maintenance_parts(version)
+    if not re.fullmatch('[a-f0-9]{40}', sha):
+        raise ValueError('invalid source commit')
+    return {'schema_version': 1, 'source': SOURCE, 'channel': 'stable' if stable else 'preview',
+            'version': version, 'upstream_version': base, 'revision': revision, 'sha': sha,
+            'target': target, 'archive': name, 'sha256': digest, 'binary_sha256': binary_digest,
+            'capabilities': {'account_user_quota': 1}, 'database_min': 1, 'database_max': 1,
+            'rollback_floor': ROLLBACK_FLOOR, 'migrations': migration_checksums()}
 
 
 def config(simple=False):
@@ -63,8 +106,15 @@ def plan(args):
         tagged_sha = subprocess.check_output(['git', 'rev-parse', '--verify', f'refs/tags/{tag}^{{commit}}'], text=True).strip()
         if sha != tagged_sha:
             raise ValueError('checkout does not match the selected release tag')
+        if subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=normal'], text=True).strip():
+            raise ValueError('publishing requires a clean source checkout')
     if not VERSION_RE.fullmatch(version):
         raise ValueError('invalid VERSION')
+    maintenance_parts(version)
+    if os.environ.get('GITHUB_REPOSITORY', SOURCE) != SOURCE:
+        raise ValueError('release source must be the configured Fork')
+    if not Path('backend/migrations/246_ablett_account_user_quota.sql').is_file():
+        raise ValueError('selected source does not contain the quota capability')
     VERSION_FILE.write_text(version + '\n')
     result = {'sha': sha, 'tag': tag, 'version': version,
               'owner_lower': os.environ.get('GITHUB_REPOSITORY_OWNER', '').lower(),
@@ -78,6 +128,10 @@ def plan(args):
 
 def generate_config(args):
     data = config(args.simple if args.mode == 'publish' else False)
+    version = os.environ.get('RELEASE_VERSION', VERSION_FILE.read_text().strip())
+    _, _, stable = maintenance_parts(version)
+    data['release']['prerelease'] = not stable
+    data['release']['make_latest'] = 'true' if stable and not args.simple else 'false'
     data['snapshot'] = {'version_template': '{{ .Env.RELEASE_VERSION }}'}
     data['dockers'] = []
     data['docker_manifests'] = []
@@ -95,7 +149,8 @@ def generate_config(args):
         data['before'] = {'hooks': []}
         data['builds'] = [{'id': 'sub2api', 'skip': True}]
         data['archives'] = []
-        extra = [{'glob': 'release-input/sub2api_*.tar.gz'}, {'glob': 'release-input/sub2api_*.zip'}]
+        extra = [{'glob': 'release-input/sub2api_*.tar.gz'}, {'glob': 'release-input/sub2api_*.zip'},
+                 {'glob': 'release-input/manifest-*.json'}]
         if args.simple:
             data['checksum'] = {'disable': True}
         else:
@@ -115,7 +170,7 @@ def collect(args):
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, output / name)
-    manifest = {'sha': args.sha, 'version': args.version, 'target': target, 'archive': name, 'sha256': digest}
+    manifest = manifest_metadata(args.version, args.sha, target, name, digest, binary_sha256(source, target))
     (output / f"manifest-{args.goos}-{args.goarch}.json").write_text(json.dumps(manifest) + '\n')
 
 
@@ -127,8 +182,10 @@ def verify(args):
         manifest_name = f"manifest-{target['goos']}-{target['goarch']}.json"
         expected.update((name, manifest_name))
         manifest = json.loads((directory / manifest_name).read_text())
-        if manifest != {'sha': args.sha, 'version': args.version, 'target': target,
-                        'archive': name, 'sha256': sha256(directory / name)}:
+        if manifest.get('sha256') != sha256(directory / name):
+            raise ValueError(f'archive checksum mismatch: {name}')
+        if manifest != manifest_metadata(args.version, args.sha, target, name, sha256(directory / name),
+                                         binary_sha256(directory / name, target)):
             raise ValueError(f'build provenance or checksum mismatch: {name}')
     if {p.name for p in directory.iterdir()} != expected:
         raise ValueError('missing or unexpected release artifacts')

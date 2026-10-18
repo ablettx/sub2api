@@ -596,7 +596,7 @@ func normalizeOpenAIImageSizeTier(size string) string {
 	return NormalizeImageBillingTierOrDefault(size)
 }
 
-func (s *OpenAIGatewayService) ForwardImages(
+func (s *OpenAIGatewayService) forwardImagesWithoutUserQuota(
 	ctx context.Context,
 	c *gin.Context,
 	account *Account,

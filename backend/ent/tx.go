@@ -20,6 +20,16 @@ type Tx struct {
 	Account *AccountClient
 	// AccountGroup is the client for interacting with the AccountGroup builders.
 	AccountGroup *AccountGroupClient
+	// AccountUserQuotaCycle is the client for interacting with the AccountUserQuotaCycle builders.
+	AccountUserQuotaCycle *AccountUserQuotaCycleClient
+	// AccountUserQuotaMember is the client for interacting with the AccountUserQuotaMember builders.
+	AccountUserQuotaMember *AccountUserQuotaMemberClient
+	// AccountUserQuotaPolicy is the client for interacting with the AccountUserQuotaPolicy builders.
+	AccountUserQuotaPolicy *AccountUserQuotaPolicyClient
+	// AccountUserQuotaReservation is the client for interacting with the AccountUserQuotaReservation builders.
+	AccountUserQuotaReservation *AccountUserQuotaReservationClient
+	// AccountUserQuotaUsage is the client for interacting with the AccountUserQuotaUsage builders.
+	AccountUserQuotaUsage *AccountUserQuotaUsageClient
 	// Announcement is the client for interacting with the Announcement builders.
 	Announcement *AnnouncementClient
 	// AnnouncementRead is the client for interacting with the AnnouncementRead builders.
@@ -226,6 +236,11 @@ func (tx *Tx) init() {
 	tx.APIKey = NewAPIKeyClient(tx.config)
 	tx.Account = NewAccountClient(tx.config)
 	tx.AccountGroup = NewAccountGroupClient(tx.config)
+	tx.AccountUserQuotaCycle = NewAccountUserQuotaCycleClient(tx.config)
+	tx.AccountUserQuotaMember = NewAccountUserQuotaMemberClient(tx.config)
+	tx.AccountUserQuotaPolicy = NewAccountUserQuotaPolicyClient(tx.config)
+	tx.AccountUserQuotaReservation = NewAccountUserQuotaReservationClient(tx.config)
+	tx.AccountUserQuotaUsage = NewAccountUserQuotaUsageClient(tx.config)
 	tx.Announcement = NewAnnouncementClient(tx.config)
 	tx.AnnouncementRead = NewAnnouncementReadClient(tx.config)
 	tx.AuthIdentity = NewAuthIdentityClient(tx.config)

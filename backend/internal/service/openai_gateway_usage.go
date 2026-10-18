@@ -51,14 +51,15 @@ type OpenAIRecordUsageInput struct {
 // 用量按上游真实 token 计费，与 WS cyber 及正常请求口径一致（InputTokens/OutputTokens
 // 取自上游 response.failed 报告的 usage，即 mark.UpstreamInTok/OutTok）。
 type CyberPolicyUsageInput struct {
-	APIKey       *APIKey
-	Account      *Account
-	Subscription *UserSubscription
-	RequestID    string
-	Model        string
-	Stream       bool
-	InputTokens  int
-	OutputTokens int
+	AccountUserQuotaExecution *AccountUserQuotaExecution
+	APIKey                    *APIKey
+	Account                   *Account
+	Subscription              *UserSubscription
+	RequestID                 string
+	Model                     string
+	Stream                    bool
+	InputTokens               int
+	OutputTokens              int
 	// 渠道归因与请求级 meta，使 cyber 计费行与正常 RecordUsage 行口径一致
 	// （否则 cyber 行 channel_id 等为空，渠道维度统计会遗漏 cyber 命中）。
 	InboundEndpoint    string
@@ -83,9 +84,10 @@ func (s *OpenAIGatewayService) RecordCyberPolicyUsageLog(ctx context.Context, in
 		return
 	}
 	result := &OpenAIForwardResult{
-		RequestID: in.RequestID,
-		Model:     in.Model,
-		Stream:    in.Stream,
+		AccountUserQuotaExecution: in.AccountUserQuotaExecution,
+		RequestID:                 in.RequestID,
+		Model:                     in.Model,
+		Stream:                    in.Stream,
 		Usage: OpenAIUsage{
 			InputTokens:  in.InputTokens,
 			OutputTokens: in.OutputTokens,
@@ -159,6 +161,26 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 	result := input.Result
 	if result == nil {
 		return errors.New("openai usage result is nil")
+	}
+	execution := result.AccountUserQuotaExecution
+	quotaSettled := false
+	if execution != nil && (execution.Reservation != nil || accountUserQuotaIsFallback(execution)) {
+		copyInput := *input
+		copyInput.APIKey, copyInput.Subscription = execution.APIKey, execution.Subscription
+		copyInput.User, copyInput.PricingAt = execution.APIKey.User, execution.PricingAt
+		if accountUserQuotaIsFallback(execution) {
+			copyInput.ChannelUsageFields = execution.Mapping.ToUsageFields(execution.RequestedModel, result.UpstreamModel)
+		}
+		input = &copyInput
+		defer func() {
+			if execution.handle != nil {
+				if quotaSettled {
+					execution.handle.stop()
+				} else {
+					execution.handle.uncertain()
+				}
+			}
+		}()
 	}
 	if s.rateLimitService != nil && input.Account != nil && input.Account.Platform == PlatformOpenAI {
 		s.rateLimitService.ResetOpenAI403Counter(ctx, input.Account.ID)
@@ -482,6 +504,16 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 	if subscription != nil {
 		usageLog.SubscriptionID = &subscription.ID
 	}
+	var quotaReservation *AccountUserQuotaReservation
+	quotaExecutionStartedAt := input.PricingAt
+	if execution != nil {
+		quotaExecutionStartedAt = execution.PricingAt
+		quotaReservation = execution.Reservation
+		usageLog.OriginalGroupID = execution.OriginalAPIKey.GroupID
+		if quotaReservation != nil {
+			usageLog.AccountUserQuotaCycleID = &quotaReservation.CycleID
+		}
+	}
 
 	// 计算账号统计定价费用（使用最终上游模型匹配自定义规则）
 	if apiKey.GroupID != nil {
@@ -508,17 +540,20 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 	}
 
 	_, billingErr := applyUsageBilling(ctx, requestID, usageLog, &postUsageBillingParams{
-		Cost:                       cost,
-		User:                       user,
-		APIKey:                     apiKey,
-		Account:                    account,
-		Subscription:               subscription,
-		RequestPayloadHash:         resolveUsageBillingPayloadFingerprint(ctx, input.RequestPayloadHash),
-		IsSubscriptionBill:         isSubscriptionBilling && !simpleModeKeyRateLimitOnly,
-		AccountRateMultiplier:      accountRateMultiplier,
-		APIKeyService:              input.APIKeyService,
-		Platform:                   quotaPlatform,
-		SimpleModeKeyRateLimitOnly: simpleModeKeyRateLimitOnly,
+		Cost:                          cost,
+		User:                          user,
+		APIKey:                        apiKey,
+		Account:                       account,
+		Subscription:                  subscription,
+		RequestPayloadHash:            resolveUsageBillingPayloadFingerprint(ctx, input.RequestPayloadHash),
+		IsSubscriptionBill:            isSubscriptionBilling && !simpleModeKeyRateLimitOnly,
+		AccountRateMultiplier:         accountRateMultiplier,
+		APIKeyService:                 input.APIKeyService,
+		Platform:                      quotaPlatform,
+		SimpleModeKeyRateLimitOnly:    simpleModeKeyRateLimitOnly,
+		AccountUserQuotaTracking:      s.accountUserQuota != nil && account.Platform == PlatformOpenAI && account.Type == AccountTypeOAuth,
+		AccountUserQuotaReservation:   quotaReservation,
+		AccountUserExecutionStartedAt: quotaExecutionStartedAt,
 	}, s.billingDeps(), s.usageBillingRepo)
 
 	if billingErr != nil {
@@ -526,6 +561,7 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		writeUsageLogBestEffort(ctx, s.usageLogRepo, usageLog, "service.openai_gateway")
 		return billingErr
 	}
+	quotaSettled = true
 	writeUsageLogBestEffort(ctx, s.usageLogRepo, usageLog, "service.openai_gateway")
 
 	return nil

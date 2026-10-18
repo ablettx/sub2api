@@ -3175,6 +3175,14 @@
 
     </form>
 
+    <AccountUserQuotaPanel
+      v-if="show && account?.platform === 'openai' && account.type === 'oauth' && !isSparkShadow"
+      :key="account.id"
+      :account-id="account.id"
+      :groups="groups"
+      class="mt-6"
+    />
+
     <template #footer>
       <div v-if="account" class="flex justify-end gap-3">
         <button @click="handleClose" type="button" class="btn btn-secondary">
@@ -3227,6 +3235,7 @@
 </template>
 
 <script setup lang="ts">
+import AccountUserQuotaPanel from './AccountUserQuotaPanel.vue'
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'

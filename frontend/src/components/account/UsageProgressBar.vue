@@ -33,6 +33,15 @@
       </div>
     </div>
 
+    <div
+      v-else-if="estimatedTotalCost != null"
+      data-test="estimated-total-cost"
+      class="mb-0.5 text-[9px] text-gray-500 dark:text-gray-400"
+      :title="t('admin.accounts.usageWindow.estimatedTotalCostTooltip')"
+    >
+      {{ t('admin.accounts.usageWindow.estimatedTotalCost', { cost: estimatedTotalCost.toFixed(2) }) }}
+    </div>
+
     <!-- Progress bar row -->
     <div class="flex items-center gap-1">
       <!-- Label badge (label-width: fixed = 定宽居中, auto = 限宽截断左对齐) -->

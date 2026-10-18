@@ -19,6 +19,8 @@ export default {
 
   // Version Badge
   version: {
+    releaseSource: '更新来源',
+    upstreamSource: '上游代码来源',
     currentVersion: '当前版本',
     latestVersion: '最新版本',
     upToDate: '已是最新版本',

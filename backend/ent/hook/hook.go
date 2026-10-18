@@ -45,6 +45,66 @@ func (f AccountGroupFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountGroupMutation", m)
 }
 
+// The AccountUserQuotaCycleFunc type is an adapter to allow the use of ordinary
+// function as AccountUserQuotaCycle mutator.
+type AccountUserQuotaCycleFunc func(context.Context, *ent.AccountUserQuotaCycleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountUserQuotaCycleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountUserQuotaCycleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountUserQuotaCycleMutation", m)
+}
+
+// The AccountUserQuotaMemberFunc type is an adapter to allow the use of ordinary
+// function as AccountUserQuotaMember mutator.
+type AccountUserQuotaMemberFunc func(context.Context, *ent.AccountUserQuotaMemberMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountUserQuotaMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountUserQuotaMemberMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountUserQuotaMemberMutation", m)
+}
+
+// The AccountUserQuotaPolicyFunc type is an adapter to allow the use of ordinary
+// function as AccountUserQuotaPolicy mutator.
+type AccountUserQuotaPolicyFunc func(context.Context, *ent.AccountUserQuotaPolicyMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountUserQuotaPolicyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountUserQuotaPolicyMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountUserQuotaPolicyMutation", m)
+}
+
+// The AccountUserQuotaReservationFunc type is an adapter to allow the use of ordinary
+// function as AccountUserQuotaReservation mutator.
+type AccountUserQuotaReservationFunc func(context.Context, *ent.AccountUserQuotaReservationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountUserQuotaReservationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountUserQuotaReservationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountUserQuotaReservationMutation", m)
+}
+
+// The AccountUserQuotaUsageFunc type is an adapter to allow the use of ordinary
+// function as AccountUserQuotaUsage mutator.
+type AccountUserQuotaUsageFunc func(context.Context, *ent.AccountUserQuotaUsageMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AccountUserQuotaUsageFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AccountUserQuotaUsageMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AccountUserQuotaUsageMutation", m)
+}
+
 // The AnnouncementFunc type is an adapter to allow the use of ordinary
 // function as Announcement mutator.
 type AnnouncementFunc func(context.Context, *ent.AnnouncementMutation) (ent.Value, error)

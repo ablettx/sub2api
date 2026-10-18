@@ -608,8 +608,9 @@ describe('AccountUsageCell', () => {
     expect(wrapper.text()).toContain('7d|36|900')
   })
 
-  it('仅为 OpenAI OAuth 7d 窗口计算预计总费用', async () => {
+  it('OpenAI OAuth 7d 窗口使用后端统一估值', async () => {
     getUsage.mockResolvedValue({
+      openai_seven_day_estimated_total_cost: 31.23456789,
       five_hour: {
         utilization: 25,
         resets_at: null,
@@ -642,7 +643,7 @@ describe('AccountUsageCell', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('5h|none')
-    expect(wrapper.text()).toContain('7d|30')
+    expect(wrapper.text()).toContain('7d|31.23456789')
   })
 
   it.each([

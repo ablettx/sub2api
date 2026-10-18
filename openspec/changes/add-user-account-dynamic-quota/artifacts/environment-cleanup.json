@@ -1,0 +1,14 @@
+{
+  "task_space_29_finished": true,
+  "task_containers_removed": true,
+  "task_network_removed": true,
+  "mock_github_proxy_stopped": true,
+  "former_local_ports_closed": {
+    "15432": true,
+    "16379": true,
+    "18080": true,
+    "18902": true
+  },
+  "production_touched": false,
+  "docker_desktop_restored_to_stopped": true
+}

@@ -17,6 +17,11 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/Wei-Shaw/sub2api/ent/account"
 	"github.com/Wei-Shaw/sub2api/ent/accountgroup"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotacycle"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotamember"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotapolicy"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotareservation"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotausage"
 	"github.com/Wei-Shaw/sub2api/ent/announcement"
 	"github.com/Wei-Shaw/sub2api/ent/announcementread"
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
@@ -69,6 +74,16 @@ type Client struct {
 	Account *AccountClient
 	// AccountGroup is the client for interacting with the AccountGroup builders.
 	AccountGroup *AccountGroupClient
+	// AccountUserQuotaCycle is the client for interacting with the AccountUserQuotaCycle builders.
+	AccountUserQuotaCycle *AccountUserQuotaCycleClient
+	// AccountUserQuotaMember is the client for interacting with the AccountUserQuotaMember builders.
+	AccountUserQuotaMember *AccountUserQuotaMemberClient
+	// AccountUserQuotaPolicy is the client for interacting with the AccountUserQuotaPolicy builders.
+	AccountUserQuotaPolicy *AccountUserQuotaPolicyClient
+	// AccountUserQuotaReservation is the client for interacting with the AccountUserQuotaReservation builders.
+	AccountUserQuotaReservation *AccountUserQuotaReservationClient
+	// AccountUserQuotaUsage is the client for interacting with the AccountUserQuotaUsage builders.
+	AccountUserQuotaUsage *AccountUserQuotaUsageClient
 	// Announcement is the client for interacting with the Announcement builders.
 	Announcement *AnnouncementClient
 	// AnnouncementRead is the client for interacting with the AnnouncementRead builders.
@@ -155,6 +170,11 @@ func (c *Client) init() {
 	c.APIKey = NewAPIKeyClient(c.config)
 	c.Account = NewAccountClient(c.config)
 	c.AccountGroup = NewAccountGroupClient(c.config)
+	c.AccountUserQuotaCycle = NewAccountUserQuotaCycleClient(c.config)
+	c.AccountUserQuotaMember = NewAccountUserQuotaMemberClient(c.config)
+	c.AccountUserQuotaPolicy = NewAccountUserQuotaPolicyClient(c.config)
+	c.AccountUserQuotaReservation = NewAccountUserQuotaReservationClient(c.config)
+	c.AccountUserQuotaUsage = NewAccountUserQuotaUsageClient(c.config)
 	c.Announcement = NewAnnouncementClient(c.config)
 	c.AnnouncementRead = NewAnnouncementReadClient(c.config)
 	c.AuthIdentity = NewAuthIdentityClient(c.config)
@@ -286,6 +306,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		APIKey:                        NewAPIKeyClient(cfg),
 		Account:                       NewAccountClient(cfg),
 		AccountGroup:                  NewAccountGroupClient(cfg),
+		AccountUserQuotaCycle:         NewAccountUserQuotaCycleClient(cfg),
+		AccountUserQuotaMember:        NewAccountUserQuotaMemberClient(cfg),
+		AccountUserQuotaPolicy:        NewAccountUserQuotaPolicyClient(cfg),
+		AccountUserQuotaReservation:   NewAccountUserQuotaReservationClient(cfg),
+		AccountUserQuotaUsage:         NewAccountUserQuotaUsageClient(cfg),
 		Announcement:                  NewAnnouncementClient(cfg),
 		AnnouncementRead:              NewAnnouncementReadClient(cfg),
 		AuthIdentity:                  NewAuthIdentityClient(cfg),
@@ -344,6 +369,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		APIKey:                        NewAPIKeyClient(cfg),
 		Account:                       NewAccountClient(cfg),
 		AccountGroup:                  NewAccountGroupClient(cfg),
+		AccountUserQuotaCycle:         NewAccountUserQuotaCycleClient(cfg),
+		AccountUserQuotaMember:        NewAccountUserQuotaMemberClient(cfg),
+		AccountUserQuotaPolicy:        NewAccountUserQuotaPolicyClient(cfg),
+		AccountUserQuotaReservation:   NewAccountUserQuotaReservationClient(cfg),
+		AccountUserQuotaUsage:         NewAccountUserQuotaUsageClient(cfg),
 		Announcement:                  NewAnnouncementClient(cfg),
 		AnnouncementRead:              NewAnnouncementReadClient(cfg),
 		AuthIdentity:                  NewAuthIdentityClient(cfg),
@@ -409,16 +439,18 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.APIKey, c.Account, c.AccountGroup, c.Announcement, c.AnnouncementRead,
-		c.AuthIdentity, c.AuthIdentityChannel, c.BatchImageEvent, c.BatchImageItem,
-		c.BatchImageJob, c.ChannelMonitor, c.ChannelMonitorDailyRollup,
-		c.ChannelMonitorHistory, c.ChannelMonitorRequestTemplate,
-		c.CompositeModelRoute, c.ErrorPassthroughRule, c.Group, c.IdempotencyRecord,
-		c.IdentityAdoptionDecision, c.PaymentAuditLog, c.PaymentOrder,
-		c.PaymentProviderInstance, c.PendingAuthSession, c.PromoCode, c.PromoCodeUsage,
-		c.Proxy, c.RedeemCode, c.SecuritySecret, c.Setting, c.SubscriptionPlan,
-		c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog, c.User,
-		c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
+		c.APIKey, c.Account, c.AccountGroup, c.AccountUserQuotaCycle,
+		c.AccountUserQuotaMember, c.AccountUserQuotaPolicy,
+		c.AccountUserQuotaReservation, c.AccountUserQuotaUsage, c.Announcement,
+		c.AnnouncementRead, c.AuthIdentity, c.AuthIdentityChannel, c.BatchImageEvent,
+		c.BatchImageItem, c.BatchImageJob, c.ChannelMonitor,
+		c.ChannelMonitorDailyRollup, c.ChannelMonitorHistory,
+		c.ChannelMonitorRequestTemplate, c.CompositeModelRoute, c.ErrorPassthroughRule,
+		c.Group, c.IdempotencyRecord, c.IdentityAdoptionDecision, c.PaymentAuditLog,
+		c.PaymentOrder, c.PaymentProviderInstance, c.PendingAuthSession, c.PromoCode,
+		c.PromoCodeUsage, c.Proxy, c.RedeemCode, c.SecuritySecret, c.Setting,
+		c.SubscriptionPlan, c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog,
+		c.User, c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
 		c.UserPlatformQuota, c.UserSubscription,
 	} {
 		n.Use(hooks...)
@@ -429,16 +461,18 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.APIKey, c.Account, c.AccountGroup, c.Announcement, c.AnnouncementRead,
-		c.AuthIdentity, c.AuthIdentityChannel, c.BatchImageEvent, c.BatchImageItem,
-		c.BatchImageJob, c.ChannelMonitor, c.ChannelMonitorDailyRollup,
-		c.ChannelMonitorHistory, c.ChannelMonitorRequestTemplate,
-		c.CompositeModelRoute, c.ErrorPassthroughRule, c.Group, c.IdempotencyRecord,
-		c.IdentityAdoptionDecision, c.PaymentAuditLog, c.PaymentOrder,
-		c.PaymentProviderInstance, c.PendingAuthSession, c.PromoCode, c.PromoCodeUsage,
-		c.Proxy, c.RedeemCode, c.SecuritySecret, c.Setting, c.SubscriptionPlan,
-		c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog, c.User,
-		c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
+		c.APIKey, c.Account, c.AccountGroup, c.AccountUserQuotaCycle,
+		c.AccountUserQuotaMember, c.AccountUserQuotaPolicy,
+		c.AccountUserQuotaReservation, c.AccountUserQuotaUsage, c.Announcement,
+		c.AnnouncementRead, c.AuthIdentity, c.AuthIdentityChannel, c.BatchImageEvent,
+		c.BatchImageItem, c.BatchImageJob, c.ChannelMonitor,
+		c.ChannelMonitorDailyRollup, c.ChannelMonitorHistory,
+		c.ChannelMonitorRequestTemplate, c.CompositeModelRoute, c.ErrorPassthroughRule,
+		c.Group, c.IdempotencyRecord, c.IdentityAdoptionDecision, c.PaymentAuditLog,
+		c.PaymentOrder, c.PaymentProviderInstance, c.PendingAuthSession, c.PromoCode,
+		c.PromoCodeUsage, c.Proxy, c.RedeemCode, c.SecuritySecret, c.Setting,
+		c.SubscriptionPlan, c.TLSFingerprintProfile, c.UsageCleanupTask, c.UsageLog,
+		c.User, c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
 		c.UserPlatformQuota, c.UserSubscription,
 	} {
 		n.Intercept(interceptors...)
@@ -454,6 +488,16 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Account.mutate(ctx, m)
 	case *AccountGroupMutation:
 		return c.AccountGroup.mutate(ctx, m)
+	case *AccountUserQuotaCycleMutation:
+		return c.AccountUserQuotaCycle.mutate(ctx, m)
+	case *AccountUserQuotaMemberMutation:
+		return c.AccountUserQuotaMember.mutate(ctx, m)
+	case *AccountUserQuotaPolicyMutation:
+		return c.AccountUserQuotaPolicy.mutate(ctx, m)
+	case *AccountUserQuotaReservationMutation:
+		return c.AccountUserQuotaReservation.mutate(ctx, m)
+	case *AccountUserQuotaUsageMutation:
+		return c.AccountUserQuotaUsage.mutate(ctx, m)
 	case *AnnouncementMutation:
 		return c.Announcement.mutate(ctx, m)
 	case *AnnouncementReadMutation:
@@ -1058,6 +1102,671 @@ func (c *AccountGroupClient) mutate(ctx context.Context, m *AccountGroupMutation
 		return (&AccountGroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown AccountGroup mutation op: %q", m.Op())
+	}
+}
+
+// AccountUserQuotaCycleClient is a client for the AccountUserQuotaCycle schema.
+type AccountUserQuotaCycleClient struct {
+	config
+}
+
+// NewAccountUserQuotaCycleClient returns a client for the AccountUserQuotaCycle from the given config.
+func NewAccountUserQuotaCycleClient(c config) *AccountUserQuotaCycleClient {
+	return &AccountUserQuotaCycleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `accountuserquotacycle.Hooks(f(g(h())))`.
+func (c *AccountUserQuotaCycleClient) Use(hooks ...Hook) {
+	c.hooks.AccountUserQuotaCycle = append(c.hooks.AccountUserQuotaCycle, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `accountuserquotacycle.Intercept(f(g(h())))`.
+func (c *AccountUserQuotaCycleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AccountUserQuotaCycle = append(c.inters.AccountUserQuotaCycle, interceptors...)
+}
+
+// Create returns a builder for creating a AccountUserQuotaCycle entity.
+func (c *AccountUserQuotaCycleClient) Create() *AccountUserQuotaCycleCreate {
+	mutation := newAccountUserQuotaCycleMutation(c.config, OpCreate)
+	return &AccountUserQuotaCycleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AccountUserQuotaCycle entities.
+func (c *AccountUserQuotaCycleClient) CreateBulk(builders ...*AccountUserQuotaCycleCreate) *AccountUserQuotaCycleCreateBulk {
+	return &AccountUserQuotaCycleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountUserQuotaCycleClient) MapCreateBulk(slice any, setFunc func(*AccountUserQuotaCycleCreate, int)) *AccountUserQuotaCycleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountUserQuotaCycleCreateBulk{err: fmt.Errorf("calling to AccountUserQuotaCycleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountUserQuotaCycleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountUserQuotaCycleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AccountUserQuotaCycle.
+func (c *AccountUserQuotaCycleClient) Update() *AccountUserQuotaCycleUpdate {
+	mutation := newAccountUserQuotaCycleMutation(c.config, OpUpdate)
+	return &AccountUserQuotaCycleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountUserQuotaCycleClient) UpdateOne(_m *AccountUserQuotaCycle) *AccountUserQuotaCycleUpdateOne {
+	mutation := newAccountUserQuotaCycleMutation(c.config, OpUpdateOne, withAccountUserQuotaCycle(_m))
+	return &AccountUserQuotaCycleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountUserQuotaCycleClient) UpdateOneID(id int64) *AccountUserQuotaCycleUpdateOne {
+	mutation := newAccountUserQuotaCycleMutation(c.config, OpUpdateOne, withAccountUserQuotaCycleID(id))
+	return &AccountUserQuotaCycleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AccountUserQuotaCycle.
+func (c *AccountUserQuotaCycleClient) Delete() *AccountUserQuotaCycleDelete {
+	mutation := newAccountUserQuotaCycleMutation(c.config, OpDelete)
+	return &AccountUserQuotaCycleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountUserQuotaCycleClient) DeleteOne(_m *AccountUserQuotaCycle) *AccountUserQuotaCycleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountUserQuotaCycleClient) DeleteOneID(id int64) *AccountUserQuotaCycleDeleteOne {
+	builder := c.Delete().Where(accountuserquotacycle.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountUserQuotaCycleDeleteOne{builder}
+}
+
+// Query returns a query builder for AccountUserQuotaCycle.
+func (c *AccountUserQuotaCycleClient) Query() *AccountUserQuotaCycleQuery {
+	return &AccountUserQuotaCycleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccountUserQuotaCycle},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AccountUserQuotaCycle entity by its id.
+func (c *AccountUserQuotaCycleClient) Get(ctx context.Context, id int64) (*AccountUserQuotaCycle, error) {
+	return c.Query().Where(accountuserquotacycle.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountUserQuotaCycleClient) GetX(ctx context.Context, id int64) *AccountUserQuotaCycle {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AccountUserQuotaCycleClient) Hooks() []Hook {
+	return c.hooks.AccountUserQuotaCycle
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountUserQuotaCycleClient) Interceptors() []Interceptor {
+	return c.inters.AccountUserQuotaCycle
+}
+
+func (c *AccountUserQuotaCycleClient) mutate(ctx context.Context, m *AccountUserQuotaCycleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountUserQuotaCycleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountUserQuotaCycleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountUserQuotaCycleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountUserQuotaCycleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AccountUserQuotaCycle mutation op: %q", m.Op())
+	}
+}
+
+// AccountUserQuotaMemberClient is a client for the AccountUserQuotaMember schema.
+type AccountUserQuotaMemberClient struct {
+	config
+}
+
+// NewAccountUserQuotaMemberClient returns a client for the AccountUserQuotaMember from the given config.
+func NewAccountUserQuotaMemberClient(c config) *AccountUserQuotaMemberClient {
+	return &AccountUserQuotaMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `accountuserquotamember.Hooks(f(g(h())))`.
+func (c *AccountUserQuotaMemberClient) Use(hooks ...Hook) {
+	c.hooks.AccountUserQuotaMember = append(c.hooks.AccountUserQuotaMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `accountuserquotamember.Intercept(f(g(h())))`.
+func (c *AccountUserQuotaMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AccountUserQuotaMember = append(c.inters.AccountUserQuotaMember, interceptors...)
+}
+
+// Create returns a builder for creating a AccountUserQuotaMember entity.
+func (c *AccountUserQuotaMemberClient) Create() *AccountUserQuotaMemberCreate {
+	mutation := newAccountUserQuotaMemberMutation(c.config, OpCreate)
+	return &AccountUserQuotaMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AccountUserQuotaMember entities.
+func (c *AccountUserQuotaMemberClient) CreateBulk(builders ...*AccountUserQuotaMemberCreate) *AccountUserQuotaMemberCreateBulk {
+	return &AccountUserQuotaMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountUserQuotaMemberClient) MapCreateBulk(slice any, setFunc func(*AccountUserQuotaMemberCreate, int)) *AccountUserQuotaMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountUserQuotaMemberCreateBulk{err: fmt.Errorf("calling to AccountUserQuotaMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountUserQuotaMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountUserQuotaMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AccountUserQuotaMember.
+func (c *AccountUserQuotaMemberClient) Update() *AccountUserQuotaMemberUpdate {
+	mutation := newAccountUserQuotaMemberMutation(c.config, OpUpdate)
+	return &AccountUserQuotaMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountUserQuotaMemberClient) UpdateOne(_m *AccountUserQuotaMember) *AccountUserQuotaMemberUpdateOne {
+	mutation := newAccountUserQuotaMemberMutation(c.config, OpUpdateOne, withAccountUserQuotaMember(_m))
+	return &AccountUserQuotaMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountUserQuotaMemberClient) UpdateOneID(id int64) *AccountUserQuotaMemberUpdateOne {
+	mutation := newAccountUserQuotaMemberMutation(c.config, OpUpdateOne, withAccountUserQuotaMemberID(id))
+	return &AccountUserQuotaMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AccountUserQuotaMember.
+func (c *AccountUserQuotaMemberClient) Delete() *AccountUserQuotaMemberDelete {
+	mutation := newAccountUserQuotaMemberMutation(c.config, OpDelete)
+	return &AccountUserQuotaMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountUserQuotaMemberClient) DeleteOne(_m *AccountUserQuotaMember) *AccountUserQuotaMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountUserQuotaMemberClient) DeleteOneID(id int64) *AccountUserQuotaMemberDeleteOne {
+	builder := c.Delete().Where(accountuserquotamember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountUserQuotaMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for AccountUserQuotaMember.
+func (c *AccountUserQuotaMemberClient) Query() *AccountUserQuotaMemberQuery {
+	return &AccountUserQuotaMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccountUserQuotaMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AccountUserQuotaMember entity by its id.
+func (c *AccountUserQuotaMemberClient) Get(ctx context.Context, id int64) (*AccountUserQuotaMember, error) {
+	return c.Query().Where(accountuserquotamember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountUserQuotaMemberClient) GetX(ctx context.Context, id int64) *AccountUserQuotaMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AccountUserQuotaMemberClient) Hooks() []Hook {
+	return c.hooks.AccountUserQuotaMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountUserQuotaMemberClient) Interceptors() []Interceptor {
+	return c.inters.AccountUserQuotaMember
+}
+
+func (c *AccountUserQuotaMemberClient) mutate(ctx context.Context, m *AccountUserQuotaMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountUserQuotaMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountUserQuotaMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountUserQuotaMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountUserQuotaMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AccountUserQuotaMember mutation op: %q", m.Op())
+	}
+}
+
+// AccountUserQuotaPolicyClient is a client for the AccountUserQuotaPolicy schema.
+type AccountUserQuotaPolicyClient struct {
+	config
+}
+
+// NewAccountUserQuotaPolicyClient returns a client for the AccountUserQuotaPolicy from the given config.
+func NewAccountUserQuotaPolicyClient(c config) *AccountUserQuotaPolicyClient {
+	return &AccountUserQuotaPolicyClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `accountuserquotapolicy.Hooks(f(g(h())))`.
+func (c *AccountUserQuotaPolicyClient) Use(hooks ...Hook) {
+	c.hooks.AccountUserQuotaPolicy = append(c.hooks.AccountUserQuotaPolicy, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `accountuserquotapolicy.Intercept(f(g(h())))`.
+func (c *AccountUserQuotaPolicyClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AccountUserQuotaPolicy = append(c.inters.AccountUserQuotaPolicy, interceptors...)
+}
+
+// Create returns a builder for creating a AccountUserQuotaPolicy entity.
+func (c *AccountUserQuotaPolicyClient) Create() *AccountUserQuotaPolicyCreate {
+	mutation := newAccountUserQuotaPolicyMutation(c.config, OpCreate)
+	return &AccountUserQuotaPolicyCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AccountUserQuotaPolicy entities.
+func (c *AccountUserQuotaPolicyClient) CreateBulk(builders ...*AccountUserQuotaPolicyCreate) *AccountUserQuotaPolicyCreateBulk {
+	return &AccountUserQuotaPolicyCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountUserQuotaPolicyClient) MapCreateBulk(slice any, setFunc func(*AccountUserQuotaPolicyCreate, int)) *AccountUserQuotaPolicyCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountUserQuotaPolicyCreateBulk{err: fmt.Errorf("calling to AccountUserQuotaPolicyClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountUserQuotaPolicyCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountUserQuotaPolicyCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AccountUserQuotaPolicy.
+func (c *AccountUserQuotaPolicyClient) Update() *AccountUserQuotaPolicyUpdate {
+	mutation := newAccountUserQuotaPolicyMutation(c.config, OpUpdate)
+	return &AccountUserQuotaPolicyUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountUserQuotaPolicyClient) UpdateOne(_m *AccountUserQuotaPolicy) *AccountUserQuotaPolicyUpdateOne {
+	mutation := newAccountUserQuotaPolicyMutation(c.config, OpUpdateOne, withAccountUserQuotaPolicy(_m))
+	return &AccountUserQuotaPolicyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountUserQuotaPolicyClient) UpdateOneID(id int64) *AccountUserQuotaPolicyUpdateOne {
+	mutation := newAccountUserQuotaPolicyMutation(c.config, OpUpdateOne, withAccountUserQuotaPolicyID(id))
+	return &AccountUserQuotaPolicyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AccountUserQuotaPolicy.
+func (c *AccountUserQuotaPolicyClient) Delete() *AccountUserQuotaPolicyDelete {
+	mutation := newAccountUserQuotaPolicyMutation(c.config, OpDelete)
+	return &AccountUserQuotaPolicyDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountUserQuotaPolicyClient) DeleteOne(_m *AccountUserQuotaPolicy) *AccountUserQuotaPolicyDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountUserQuotaPolicyClient) DeleteOneID(id int64) *AccountUserQuotaPolicyDeleteOne {
+	builder := c.Delete().Where(accountuserquotapolicy.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountUserQuotaPolicyDeleteOne{builder}
+}
+
+// Query returns a query builder for AccountUserQuotaPolicy.
+func (c *AccountUserQuotaPolicyClient) Query() *AccountUserQuotaPolicyQuery {
+	return &AccountUserQuotaPolicyQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccountUserQuotaPolicy},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AccountUserQuotaPolicy entity by its id.
+func (c *AccountUserQuotaPolicyClient) Get(ctx context.Context, id int64) (*AccountUserQuotaPolicy, error) {
+	return c.Query().Where(accountuserquotapolicy.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountUserQuotaPolicyClient) GetX(ctx context.Context, id int64) *AccountUserQuotaPolicy {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AccountUserQuotaPolicyClient) Hooks() []Hook {
+	return c.hooks.AccountUserQuotaPolicy
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountUserQuotaPolicyClient) Interceptors() []Interceptor {
+	return c.inters.AccountUserQuotaPolicy
+}
+
+func (c *AccountUserQuotaPolicyClient) mutate(ctx context.Context, m *AccountUserQuotaPolicyMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountUserQuotaPolicyCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountUserQuotaPolicyUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountUserQuotaPolicyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountUserQuotaPolicyDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AccountUserQuotaPolicy mutation op: %q", m.Op())
+	}
+}
+
+// AccountUserQuotaReservationClient is a client for the AccountUserQuotaReservation schema.
+type AccountUserQuotaReservationClient struct {
+	config
+}
+
+// NewAccountUserQuotaReservationClient returns a client for the AccountUserQuotaReservation from the given config.
+func NewAccountUserQuotaReservationClient(c config) *AccountUserQuotaReservationClient {
+	return &AccountUserQuotaReservationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `accountuserquotareservation.Hooks(f(g(h())))`.
+func (c *AccountUserQuotaReservationClient) Use(hooks ...Hook) {
+	c.hooks.AccountUserQuotaReservation = append(c.hooks.AccountUserQuotaReservation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `accountuserquotareservation.Intercept(f(g(h())))`.
+func (c *AccountUserQuotaReservationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AccountUserQuotaReservation = append(c.inters.AccountUserQuotaReservation, interceptors...)
+}
+
+// Create returns a builder for creating a AccountUserQuotaReservation entity.
+func (c *AccountUserQuotaReservationClient) Create() *AccountUserQuotaReservationCreate {
+	mutation := newAccountUserQuotaReservationMutation(c.config, OpCreate)
+	return &AccountUserQuotaReservationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AccountUserQuotaReservation entities.
+func (c *AccountUserQuotaReservationClient) CreateBulk(builders ...*AccountUserQuotaReservationCreate) *AccountUserQuotaReservationCreateBulk {
+	return &AccountUserQuotaReservationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountUserQuotaReservationClient) MapCreateBulk(slice any, setFunc func(*AccountUserQuotaReservationCreate, int)) *AccountUserQuotaReservationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountUserQuotaReservationCreateBulk{err: fmt.Errorf("calling to AccountUserQuotaReservationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountUserQuotaReservationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountUserQuotaReservationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AccountUserQuotaReservation.
+func (c *AccountUserQuotaReservationClient) Update() *AccountUserQuotaReservationUpdate {
+	mutation := newAccountUserQuotaReservationMutation(c.config, OpUpdate)
+	return &AccountUserQuotaReservationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountUserQuotaReservationClient) UpdateOne(_m *AccountUserQuotaReservation) *AccountUserQuotaReservationUpdateOne {
+	mutation := newAccountUserQuotaReservationMutation(c.config, OpUpdateOne, withAccountUserQuotaReservation(_m))
+	return &AccountUserQuotaReservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountUserQuotaReservationClient) UpdateOneID(id int64) *AccountUserQuotaReservationUpdateOne {
+	mutation := newAccountUserQuotaReservationMutation(c.config, OpUpdateOne, withAccountUserQuotaReservationID(id))
+	return &AccountUserQuotaReservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AccountUserQuotaReservation.
+func (c *AccountUserQuotaReservationClient) Delete() *AccountUserQuotaReservationDelete {
+	mutation := newAccountUserQuotaReservationMutation(c.config, OpDelete)
+	return &AccountUserQuotaReservationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountUserQuotaReservationClient) DeleteOne(_m *AccountUserQuotaReservation) *AccountUserQuotaReservationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountUserQuotaReservationClient) DeleteOneID(id int64) *AccountUserQuotaReservationDeleteOne {
+	builder := c.Delete().Where(accountuserquotareservation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountUserQuotaReservationDeleteOne{builder}
+}
+
+// Query returns a query builder for AccountUserQuotaReservation.
+func (c *AccountUserQuotaReservationClient) Query() *AccountUserQuotaReservationQuery {
+	return &AccountUserQuotaReservationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccountUserQuotaReservation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AccountUserQuotaReservation entity by its id.
+func (c *AccountUserQuotaReservationClient) Get(ctx context.Context, id int64) (*AccountUserQuotaReservation, error) {
+	return c.Query().Where(accountuserquotareservation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountUserQuotaReservationClient) GetX(ctx context.Context, id int64) *AccountUserQuotaReservation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AccountUserQuotaReservationClient) Hooks() []Hook {
+	return c.hooks.AccountUserQuotaReservation
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountUserQuotaReservationClient) Interceptors() []Interceptor {
+	return c.inters.AccountUserQuotaReservation
+}
+
+func (c *AccountUserQuotaReservationClient) mutate(ctx context.Context, m *AccountUserQuotaReservationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountUserQuotaReservationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountUserQuotaReservationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountUserQuotaReservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountUserQuotaReservationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AccountUserQuotaReservation mutation op: %q", m.Op())
+	}
+}
+
+// AccountUserQuotaUsageClient is a client for the AccountUserQuotaUsage schema.
+type AccountUserQuotaUsageClient struct {
+	config
+}
+
+// NewAccountUserQuotaUsageClient returns a client for the AccountUserQuotaUsage from the given config.
+func NewAccountUserQuotaUsageClient(c config) *AccountUserQuotaUsageClient {
+	return &AccountUserQuotaUsageClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `accountuserquotausage.Hooks(f(g(h())))`.
+func (c *AccountUserQuotaUsageClient) Use(hooks ...Hook) {
+	c.hooks.AccountUserQuotaUsage = append(c.hooks.AccountUserQuotaUsage, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `accountuserquotausage.Intercept(f(g(h())))`.
+func (c *AccountUserQuotaUsageClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AccountUserQuotaUsage = append(c.inters.AccountUserQuotaUsage, interceptors...)
+}
+
+// Create returns a builder for creating a AccountUserQuotaUsage entity.
+func (c *AccountUserQuotaUsageClient) Create() *AccountUserQuotaUsageCreate {
+	mutation := newAccountUserQuotaUsageMutation(c.config, OpCreate)
+	return &AccountUserQuotaUsageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AccountUserQuotaUsage entities.
+func (c *AccountUserQuotaUsageClient) CreateBulk(builders ...*AccountUserQuotaUsageCreate) *AccountUserQuotaUsageCreateBulk {
+	return &AccountUserQuotaUsageCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AccountUserQuotaUsageClient) MapCreateBulk(slice any, setFunc func(*AccountUserQuotaUsageCreate, int)) *AccountUserQuotaUsageCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AccountUserQuotaUsageCreateBulk{err: fmt.Errorf("calling to AccountUserQuotaUsageClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AccountUserQuotaUsageCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AccountUserQuotaUsageCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AccountUserQuotaUsage.
+func (c *AccountUserQuotaUsageClient) Update() *AccountUserQuotaUsageUpdate {
+	mutation := newAccountUserQuotaUsageMutation(c.config, OpUpdate)
+	return &AccountUserQuotaUsageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AccountUserQuotaUsageClient) UpdateOne(_m *AccountUserQuotaUsage) *AccountUserQuotaUsageUpdateOne {
+	mutation := newAccountUserQuotaUsageMutation(c.config, OpUpdateOne, withAccountUserQuotaUsage(_m))
+	return &AccountUserQuotaUsageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AccountUserQuotaUsageClient) UpdateOneID(id int64) *AccountUserQuotaUsageUpdateOne {
+	mutation := newAccountUserQuotaUsageMutation(c.config, OpUpdateOne, withAccountUserQuotaUsageID(id))
+	return &AccountUserQuotaUsageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AccountUserQuotaUsage.
+func (c *AccountUserQuotaUsageClient) Delete() *AccountUserQuotaUsageDelete {
+	mutation := newAccountUserQuotaUsageMutation(c.config, OpDelete)
+	return &AccountUserQuotaUsageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AccountUserQuotaUsageClient) DeleteOne(_m *AccountUserQuotaUsage) *AccountUserQuotaUsageDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AccountUserQuotaUsageClient) DeleteOneID(id int64) *AccountUserQuotaUsageDeleteOne {
+	builder := c.Delete().Where(accountuserquotausage.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AccountUserQuotaUsageDeleteOne{builder}
+}
+
+// Query returns a query builder for AccountUserQuotaUsage.
+func (c *AccountUserQuotaUsageClient) Query() *AccountUserQuotaUsageQuery {
+	return &AccountUserQuotaUsageQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAccountUserQuotaUsage},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AccountUserQuotaUsage entity by its id.
+func (c *AccountUserQuotaUsageClient) Get(ctx context.Context, id int64) (*AccountUserQuotaUsage, error) {
+	return c.Query().Where(accountuserquotausage.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AccountUserQuotaUsageClient) GetX(ctx context.Context, id int64) *AccountUserQuotaUsage {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AccountUserQuotaUsageClient) Hooks() []Hook {
+	return c.hooks.AccountUserQuotaUsage
+}
+
+// Interceptors returns the client interceptors.
+func (c *AccountUserQuotaUsageClient) Interceptors() []Interceptor {
+	return c.inters.AccountUserQuotaUsage
+}
+
+func (c *AccountUserQuotaUsageClient) mutate(ctx context.Context, m *AccountUserQuotaUsageMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AccountUserQuotaUsageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AccountUserQuotaUsageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AccountUserQuotaUsageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AccountUserQuotaUsageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AccountUserQuotaUsage mutation op: %q", m.Op())
 	}
 }
 
@@ -6841,9 +7550,11 @@ func (c *UserSubscriptionClient) mutate(ctx context.Context, m *UserSubscription
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		APIKey, Account, AccountGroup, Announcement, AnnouncementRead, AuthIdentity,
-		AuthIdentityChannel, BatchImageEvent, BatchImageItem, BatchImageJob,
-		ChannelMonitor, ChannelMonitorDailyRollup, ChannelMonitorHistory,
+		APIKey, Account, AccountGroup, AccountUserQuotaCycle, AccountUserQuotaMember,
+		AccountUserQuotaPolicy, AccountUserQuotaReservation, AccountUserQuotaUsage,
+		Announcement, AnnouncementRead, AuthIdentity, AuthIdentityChannel,
+		BatchImageEvent, BatchImageItem, BatchImageJob, ChannelMonitor,
+		ChannelMonitorDailyRollup, ChannelMonitorHistory,
 		ChannelMonitorRequestTemplate, CompositeModelRoute, ErrorPassthroughRule,
 		Group, IdempotencyRecord, IdentityAdoptionDecision, PaymentAuditLog,
 		PaymentOrder, PaymentProviderInstance, PendingAuthSession, PromoCode,
@@ -6853,9 +7564,11 @@ type (
 		UserSubscription []ent.Hook
 	}
 	inters struct {
-		APIKey, Account, AccountGroup, Announcement, AnnouncementRead, AuthIdentity,
-		AuthIdentityChannel, BatchImageEvent, BatchImageItem, BatchImageJob,
-		ChannelMonitor, ChannelMonitorDailyRollup, ChannelMonitorHistory,
+		APIKey, Account, AccountGroup, AccountUserQuotaCycle, AccountUserQuotaMember,
+		AccountUserQuotaPolicy, AccountUserQuotaReservation, AccountUserQuotaUsage,
+		Announcement, AnnouncementRead, AuthIdentity, AuthIdentityChannel,
+		BatchImageEvent, BatchImageItem, BatchImageJob, ChannelMonitor,
+		ChannelMonitorDailyRollup, ChannelMonitorHistory,
 		ChannelMonitorRequestTemplate, CompositeModelRoute, ErrorPassthroughRule,
 		Group, IdempotencyRecord, IdentityAdoptionDecision, PaymentAuditLog,
 		PaymentOrder, PaymentProviderInstance, PendingAuthSession, PromoCode,

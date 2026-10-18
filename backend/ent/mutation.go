@@ -14,6 +14,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/Wei-Shaw/sub2api/ent/account"
 	"github.com/Wei-Shaw/sub2api/ent/accountgroup"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotacycle"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotamember"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotapolicy"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotareservation"
+	"github.com/Wei-Shaw/sub2api/ent/accountuserquotausage"
 	"github.com/Wei-Shaw/sub2api/ent/announcement"
 	"github.com/Wei-Shaw/sub2api/ent/announcementread"
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
@@ -67,6 +72,11 @@ const (
 	TypeAPIKey                        = "APIKey"
 	TypeAccount                       = "Account"
 	TypeAccountGroup                  = "AccountGroup"
+	TypeAccountUserQuotaCycle         = "AccountUserQuotaCycle"
+	TypeAccountUserQuotaMember        = "AccountUserQuotaMember"
+	TypeAccountUserQuotaPolicy        = "AccountUserQuotaPolicy"
+	TypeAccountUserQuotaReservation   = "AccountUserQuotaReservation"
+	TypeAccountUserQuotaUsage         = "AccountUserQuotaUsage"
 	TypeAnnouncement                  = "Announcement"
 	TypeAnnouncementRead              = "AnnouncementRead"
 	TypeAuthIdentity                  = "AuthIdentity"
@@ -5568,6 +5578,6096 @@ func (m *AccountGroupMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown AccountGroup edge %s", name)
+}
+
+// AccountUserQuotaCycleMutation represents an operation that mutates the AccountUserQuotaCycle nodes in the graph.
+type AccountUserQuotaCycleMutation struct {
+	config
+	op                          Op
+	typ                         string
+	id                          *int64
+	created_at                  *time.Time
+	updated_at                  *time.Time
+	account_id                  *int64
+	addaccount_id               *int64
+	starts_at                   *time.Time
+	resets_at                   *time.Time
+	ready                       *bool
+	version                     *int64
+	addversion                  *int64
+	account_stats_cost          *float64
+	addaccount_stats_cost       *float64
+	estimate                    *float64
+	addestimate                 *float64
+	estimate_at                 *time.Time
+	estimate_source_cycle_id    *int64
+	addestimate_source_cycle_id *int64
+	observed_at                 *time.Time
+	used_percent                *float64
+	addused_percent             *float64
+	missing_since               *time.Time
+	backfill_through_id         *int64
+	addbackfill_through_id      *int64
+	clearedFields               map[string]struct{}
+	done                        bool
+	oldValue                    func(context.Context) (*AccountUserQuotaCycle, error)
+	predicates                  []predicate.AccountUserQuotaCycle
+}
+
+var _ ent.Mutation = (*AccountUserQuotaCycleMutation)(nil)
+
+// accountuserquotacycleOption allows management of the mutation configuration using functional options.
+type accountuserquotacycleOption func(*AccountUserQuotaCycleMutation)
+
+// newAccountUserQuotaCycleMutation creates new mutation for the AccountUserQuotaCycle entity.
+func newAccountUserQuotaCycleMutation(c config, op Op, opts ...accountuserquotacycleOption) *AccountUserQuotaCycleMutation {
+	m := &AccountUserQuotaCycleMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAccountUserQuotaCycle,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAccountUserQuotaCycleID sets the ID field of the mutation.
+func withAccountUserQuotaCycleID(id int64) accountuserquotacycleOption {
+	return func(m *AccountUserQuotaCycleMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AccountUserQuotaCycle
+		)
+		m.oldValue = func(ctx context.Context) (*AccountUserQuotaCycle, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AccountUserQuotaCycle.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAccountUserQuotaCycle sets the old AccountUserQuotaCycle of the mutation.
+func withAccountUserQuotaCycle(node *AccountUserQuotaCycle) accountuserquotacycleOption {
+	return func(m *AccountUserQuotaCycleMutation) {
+		m.oldValue = func(context.Context) (*AccountUserQuotaCycle, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AccountUserQuotaCycleMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AccountUserQuotaCycleMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AccountUserQuotaCycleMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AccountUserQuotaCycleMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AccountUserQuotaCycle.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AccountUserQuotaCycleMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AccountUserQuotaCycleMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *AccountUserQuotaCycleMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *AccountUserQuotaCycleMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetAccountID sets the "account_id" field.
+func (m *AccountUserQuotaCycleMutation) SetAccountID(i int64) {
+	m.account_id = &i
+	m.addaccount_id = nil
+}
+
+// AccountID returns the value of the "account_id" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) AccountID() (r int64, exists bool) {
+	v := m.account_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccountID returns the old "account_id" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldAccountID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccountID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccountID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccountID: %w", err)
+	}
+	return oldValue.AccountID, nil
+}
+
+// AddAccountID adds i to the "account_id" field.
+func (m *AccountUserQuotaCycleMutation) AddAccountID(i int64) {
+	if m.addaccount_id != nil {
+		*m.addaccount_id += i
+	} else {
+		m.addaccount_id = &i
+	}
+}
+
+// AddedAccountID returns the value that was added to the "account_id" field in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedAccountID() (r int64, exists bool) {
+	v := m.addaccount_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAccountID resets all changes to the "account_id" field.
+func (m *AccountUserQuotaCycleMutation) ResetAccountID() {
+	m.account_id = nil
+	m.addaccount_id = nil
+}
+
+// SetStartsAt sets the "starts_at" field.
+func (m *AccountUserQuotaCycleMutation) SetStartsAt(t time.Time) {
+	m.starts_at = &t
+}
+
+// StartsAt returns the value of the "starts_at" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) StartsAt() (r time.Time, exists bool) {
+	v := m.starts_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartsAt returns the old "starts_at" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldStartsAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStartsAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStartsAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartsAt: %w", err)
+	}
+	return oldValue.StartsAt, nil
+}
+
+// ResetStartsAt resets all changes to the "starts_at" field.
+func (m *AccountUserQuotaCycleMutation) ResetStartsAt() {
+	m.starts_at = nil
+}
+
+// SetResetsAt sets the "resets_at" field.
+func (m *AccountUserQuotaCycleMutation) SetResetsAt(t time.Time) {
+	m.resets_at = &t
+}
+
+// ResetsAt returns the value of the "resets_at" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) ResetsAt() (r time.Time, exists bool) {
+	v := m.resets_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResetsAt returns the old "resets_at" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldResetsAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResetsAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResetsAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResetsAt: %w", err)
+	}
+	return oldValue.ResetsAt, nil
+}
+
+// ResetResetsAt resets all changes to the "resets_at" field.
+func (m *AccountUserQuotaCycleMutation) ResetResetsAt() {
+	m.resets_at = nil
+}
+
+// SetReady sets the "ready" field.
+func (m *AccountUserQuotaCycleMutation) SetReady(b bool) {
+	m.ready = &b
+}
+
+// Ready returns the value of the "ready" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) Ready() (r bool, exists bool) {
+	v := m.ready
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReady returns the old "ready" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldReady(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReady is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReady requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReady: %w", err)
+	}
+	return oldValue.Ready, nil
+}
+
+// ResetReady resets all changes to the "ready" field.
+func (m *AccountUserQuotaCycleMutation) ResetReady() {
+	m.ready = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *AccountUserQuotaCycleMutation) SetVersion(i int64) {
+	m.version = &i
+	m.addversion = nil
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) Version() (r int64, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldVersion(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// AddVersion adds i to the "version" field.
+func (m *AccountUserQuotaCycleMutation) AddVersion(i int64) {
+	if m.addversion != nil {
+		*m.addversion += i
+	} else {
+		m.addversion = &i
+	}
+}
+
+// AddedVersion returns the value that was added to the "version" field in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedVersion() (r int64, exists bool) {
+	v := m.addversion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *AccountUserQuotaCycleMutation) ResetVersion() {
+	m.version = nil
+	m.addversion = nil
+}
+
+// SetAccountStatsCost sets the "account_stats_cost" field.
+func (m *AccountUserQuotaCycleMutation) SetAccountStatsCost(f float64) {
+	m.account_stats_cost = &f
+	m.addaccount_stats_cost = nil
+}
+
+// AccountStatsCost returns the value of the "account_stats_cost" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) AccountStatsCost() (r float64, exists bool) {
+	v := m.account_stats_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccountStatsCost returns the old "account_stats_cost" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldAccountStatsCost(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccountStatsCost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccountStatsCost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccountStatsCost: %w", err)
+	}
+	return oldValue.AccountStatsCost, nil
+}
+
+// AddAccountStatsCost adds f to the "account_stats_cost" field.
+func (m *AccountUserQuotaCycleMutation) AddAccountStatsCost(f float64) {
+	if m.addaccount_stats_cost != nil {
+		*m.addaccount_stats_cost += f
+	} else {
+		m.addaccount_stats_cost = &f
+	}
+}
+
+// AddedAccountStatsCost returns the value that was added to the "account_stats_cost" field in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedAccountStatsCost() (r float64, exists bool) {
+	v := m.addaccount_stats_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAccountStatsCost resets all changes to the "account_stats_cost" field.
+func (m *AccountUserQuotaCycleMutation) ResetAccountStatsCost() {
+	m.account_stats_cost = nil
+	m.addaccount_stats_cost = nil
+}
+
+// SetEstimate sets the "estimate" field.
+func (m *AccountUserQuotaCycleMutation) SetEstimate(f float64) {
+	m.estimate = &f
+	m.addestimate = nil
+}
+
+// Estimate returns the value of the "estimate" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) Estimate() (r float64, exists bool) {
+	v := m.estimate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEstimate returns the old "estimate" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldEstimate(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEstimate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEstimate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEstimate: %w", err)
+	}
+	return oldValue.Estimate, nil
+}
+
+// AddEstimate adds f to the "estimate" field.
+func (m *AccountUserQuotaCycleMutation) AddEstimate(f float64) {
+	if m.addestimate != nil {
+		*m.addestimate += f
+	} else {
+		m.addestimate = &f
+	}
+}
+
+// AddedEstimate returns the value that was added to the "estimate" field in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedEstimate() (r float64, exists bool) {
+	v := m.addestimate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEstimate clears the value of the "estimate" field.
+func (m *AccountUserQuotaCycleMutation) ClearEstimate() {
+	m.estimate = nil
+	m.addestimate = nil
+	m.clearedFields[accountuserquotacycle.FieldEstimate] = struct{}{}
+}
+
+// EstimateCleared returns if the "estimate" field was cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) EstimateCleared() bool {
+	_, ok := m.clearedFields[accountuserquotacycle.FieldEstimate]
+	return ok
+}
+
+// ResetEstimate resets all changes to the "estimate" field.
+func (m *AccountUserQuotaCycleMutation) ResetEstimate() {
+	m.estimate = nil
+	m.addestimate = nil
+	delete(m.clearedFields, accountuserquotacycle.FieldEstimate)
+}
+
+// SetEstimateAt sets the "estimate_at" field.
+func (m *AccountUserQuotaCycleMutation) SetEstimateAt(t time.Time) {
+	m.estimate_at = &t
+}
+
+// EstimateAt returns the value of the "estimate_at" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) EstimateAt() (r time.Time, exists bool) {
+	v := m.estimate_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEstimateAt returns the old "estimate_at" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldEstimateAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEstimateAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEstimateAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEstimateAt: %w", err)
+	}
+	return oldValue.EstimateAt, nil
+}
+
+// ClearEstimateAt clears the value of the "estimate_at" field.
+func (m *AccountUserQuotaCycleMutation) ClearEstimateAt() {
+	m.estimate_at = nil
+	m.clearedFields[accountuserquotacycle.FieldEstimateAt] = struct{}{}
+}
+
+// EstimateAtCleared returns if the "estimate_at" field was cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) EstimateAtCleared() bool {
+	_, ok := m.clearedFields[accountuserquotacycle.FieldEstimateAt]
+	return ok
+}
+
+// ResetEstimateAt resets all changes to the "estimate_at" field.
+func (m *AccountUserQuotaCycleMutation) ResetEstimateAt() {
+	m.estimate_at = nil
+	delete(m.clearedFields, accountuserquotacycle.FieldEstimateAt)
+}
+
+// SetEstimateSourceCycleID sets the "estimate_source_cycle_id" field.
+func (m *AccountUserQuotaCycleMutation) SetEstimateSourceCycleID(i int64) {
+	m.estimate_source_cycle_id = &i
+	m.addestimate_source_cycle_id = nil
+}
+
+// EstimateSourceCycleID returns the value of the "estimate_source_cycle_id" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) EstimateSourceCycleID() (r int64, exists bool) {
+	v := m.estimate_source_cycle_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEstimateSourceCycleID returns the old "estimate_source_cycle_id" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldEstimateSourceCycleID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEstimateSourceCycleID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEstimateSourceCycleID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEstimateSourceCycleID: %w", err)
+	}
+	return oldValue.EstimateSourceCycleID, nil
+}
+
+// AddEstimateSourceCycleID adds i to the "estimate_source_cycle_id" field.
+func (m *AccountUserQuotaCycleMutation) AddEstimateSourceCycleID(i int64) {
+	if m.addestimate_source_cycle_id != nil {
+		*m.addestimate_source_cycle_id += i
+	} else {
+		m.addestimate_source_cycle_id = &i
+	}
+}
+
+// AddedEstimateSourceCycleID returns the value that was added to the "estimate_source_cycle_id" field in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedEstimateSourceCycleID() (r int64, exists bool) {
+	v := m.addestimate_source_cycle_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEstimateSourceCycleID clears the value of the "estimate_source_cycle_id" field.
+func (m *AccountUserQuotaCycleMutation) ClearEstimateSourceCycleID() {
+	m.estimate_source_cycle_id = nil
+	m.addestimate_source_cycle_id = nil
+	m.clearedFields[accountuserquotacycle.FieldEstimateSourceCycleID] = struct{}{}
+}
+
+// EstimateSourceCycleIDCleared returns if the "estimate_source_cycle_id" field was cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) EstimateSourceCycleIDCleared() bool {
+	_, ok := m.clearedFields[accountuserquotacycle.FieldEstimateSourceCycleID]
+	return ok
+}
+
+// ResetEstimateSourceCycleID resets all changes to the "estimate_source_cycle_id" field.
+func (m *AccountUserQuotaCycleMutation) ResetEstimateSourceCycleID() {
+	m.estimate_source_cycle_id = nil
+	m.addestimate_source_cycle_id = nil
+	delete(m.clearedFields, accountuserquotacycle.FieldEstimateSourceCycleID)
+}
+
+// SetObservedAt sets the "observed_at" field.
+func (m *AccountUserQuotaCycleMutation) SetObservedAt(t time.Time) {
+	m.observed_at = &t
+}
+
+// ObservedAt returns the value of the "observed_at" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) ObservedAt() (r time.Time, exists bool) {
+	v := m.observed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldObservedAt returns the old "observed_at" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldObservedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldObservedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldObservedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldObservedAt: %w", err)
+	}
+	return oldValue.ObservedAt, nil
+}
+
+// ClearObservedAt clears the value of the "observed_at" field.
+func (m *AccountUserQuotaCycleMutation) ClearObservedAt() {
+	m.observed_at = nil
+	m.clearedFields[accountuserquotacycle.FieldObservedAt] = struct{}{}
+}
+
+// ObservedAtCleared returns if the "observed_at" field was cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) ObservedAtCleared() bool {
+	_, ok := m.clearedFields[accountuserquotacycle.FieldObservedAt]
+	return ok
+}
+
+// ResetObservedAt resets all changes to the "observed_at" field.
+func (m *AccountUserQuotaCycleMutation) ResetObservedAt() {
+	m.observed_at = nil
+	delete(m.clearedFields, accountuserquotacycle.FieldObservedAt)
+}
+
+// SetUsedPercent sets the "used_percent" field.
+func (m *AccountUserQuotaCycleMutation) SetUsedPercent(f float64) {
+	m.used_percent = &f
+	m.addused_percent = nil
+}
+
+// UsedPercent returns the value of the "used_percent" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) UsedPercent() (r float64, exists bool) {
+	v := m.used_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUsedPercent returns the old "used_percent" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldUsedPercent(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUsedPercent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUsedPercent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUsedPercent: %w", err)
+	}
+	return oldValue.UsedPercent, nil
+}
+
+// AddUsedPercent adds f to the "used_percent" field.
+func (m *AccountUserQuotaCycleMutation) AddUsedPercent(f float64) {
+	if m.addused_percent != nil {
+		*m.addused_percent += f
+	} else {
+		m.addused_percent = &f
+	}
+}
+
+// AddedUsedPercent returns the value that was added to the "used_percent" field in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedUsedPercent() (r float64, exists bool) {
+	v := m.addused_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearUsedPercent clears the value of the "used_percent" field.
+func (m *AccountUserQuotaCycleMutation) ClearUsedPercent() {
+	m.used_percent = nil
+	m.addused_percent = nil
+	m.clearedFields[accountuserquotacycle.FieldUsedPercent] = struct{}{}
+}
+
+// UsedPercentCleared returns if the "used_percent" field was cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) UsedPercentCleared() bool {
+	_, ok := m.clearedFields[accountuserquotacycle.FieldUsedPercent]
+	return ok
+}
+
+// ResetUsedPercent resets all changes to the "used_percent" field.
+func (m *AccountUserQuotaCycleMutation) ResetUsedPercent() {
+	m.used_percent = nil
+	m.addused_percent = nil
+	delete(m.clearedFields, accountuserquotacycle.FieldUsedPercent)
+}
+
+// SetMissingSince sets the "missing_since" field.
+func (m *AccountUserQuotaCycleMutation) SetMissingSince(t time.Time) {
+	m.missing_since = &t
+}
+
+// MissingSince returns the value of the "missing_since" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) MissingSince() (r time.Time, exists bool) {
+	v := m.missing_since
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMissingSince returns the old "missing_since" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldMissingSince(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMissingSince is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMissingSince requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMissingSince: %w", err)
+	}
+	return oldValue.MissingSince, nil
+}
+
+// ClearMissingSince clears the value of the "missing_since" field.
+func (m *AccountUserQuotaCycleMutation) ClearMissingSince() {
+	m.missing_since = nil
+	m.clearedFields[accountuserquotacycle.FieldMissingSince] = struct{}{}
+}
+
+// MissingSinceCleared returns if the "missing_since" field was cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) MissingSinceCleared() bool {
+	_, ok := m.clearedFields[accountuserquotacycle.FieldMissingSince]
+	return ok
+}
+
+// ResetMissingSince resets all changes to the "missing_since" field.
+func (m *AccountUserQuotaCycleMutation) ResetMissingSince() {
+	m.missing_since = nil
+	delete(m.clearedFields, accountuserquotacycle.FieldMissingSince)
+}
+
+// SetBackfillThroughID sets the "backfill_through_id" field.
+func (m *AccountUserQuotaCycleMutation) SetBackfillThroughID(i int64) {
+	m.backfill_through_id = &i
+	m.addbackfill_through_id = nil
+}
+
+// BackfillThroughID returns the value of the "backfill_through_id" field in the mutation.
+func (m *AccountUserQuotaCycleMutation) BackfillThroughID() (r int64, exists bool) {
+	v := m.backfill_through_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBackfillThroughID returns the old "backfill_through_id" field's value of the AccountUserQuotaCycle entity.
+// If the AccountUserQuotaCycle object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaCycleMutation) OldBackfillThroughID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBackfillThroughID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBackfillThroughID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBackfillThroughID: %w", err)
+	}
+	return oldValue.BackfillThroughID, nil
+}
+
+// AddBackfillThroughID adds i to the "backfill_through_id" field.
+func (m *AccountUserQuotaCycleMutation) AddBackfillThroughID(i int64) {
+	if m.addbackfill_through_id != nil {
+		*m.addbackfill_through_id += i
+	} else {
+		m.addbackfill_through_id = &i
+	}
+}
+
+// AddedBackfillThroughID returns the value that was added to the "backfill_through_id" field in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedBackfillThroughID() (r int64, exists bool) {
+	v := m.addbackfill_through_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBackfillThroughID resets all changes to the "backfill_through_id" field.
+func (m *AccountUserQuotaCycleMutation) ResetBackfillThroughID() {
+	m.backfill_through_id = nil
+	m.addbackfill_through_id = nil
+}
+
+// Where appends a list predicates to the AccountUserQuotaCycleMutation builder.
+func (m *AccountUserQuotaCycleMutation) Where(ps ...predicate.AccountUserQuotaCycle) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AccountUserQuotaCycleMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AccountUserQuotaCycleMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AccountUserQuotaCycle, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AccountUserQuotaCycleMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AccountUserQuotaCycleMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AccountUserQuotaCycle).
+func (m *AccountUserQuotaCycleMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AccountUserQuotaCycleMutation) Fields() []string {
+	fields := make([]string, 0, 15)
+	if m.created_at != nil {
+		fields = append(fields, accountuserquotacycle.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, accountuserquotacycle.FieldUpdatedAt)
+	}
+	if m.account_id != nil {
+		fields = append(fields, accountuserquotacycle.FieldAccountID)
+	}
+	if m.starts_at != nil {
+		fields = append(fields, accountuserquotacycle.FieldStartsAt)
+	}
+	if m.resets_at != nil {
+		fields = append(fields, accountuserquotacycle.FieldResetsAt)
+	}
+	if m.ready != nil {
+		fields = append(fields, accountuserquotacycle.FieldReady)
+	}
+	if m.version != nil {
+		fields = append(fields, accountuserquotacycle.FieldVersion)
+	}
+	if m.account_stats_cost != nil {
+		fields = append(fields, accountuserquotacycle.FieldAccountStatsCost)
+	}
+	if m.estimate != nil {
+		fields = append(fields, accountuserquotacycle.FieldEstimate)
+	}
+	if m.estimate_at != nil {
+		fields = append(fields, accountuserquotacycle.FieldEstimateAt)
+	}
+	if m.estimate_source_cycle_id != nil {
+		fields = append(fields, accountuserquotacycle.FieldEstimateSourceCycleID)
+	}
+	if m.observed_at != nil {
+		fields = append(fields, accountuserquotacycle.FieldObservedAt)
+	}
+	if m.used_percent != nil {
+		fields = append(fields, accountuserquotacycle.FieldUsedPercent)
+	}
+	if m.missing_since != nil {
+		fields = append(fields, accountuserquotacycle.FieldMissingSince)
+	}
+	if m.backfill_through_id != nil {
+		fields = append(fields, accountuserquotacycle.FieldBackfillThroughID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AccountUserQuotaCycleMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotacycle.FieldCreatedAt:
+		return m.CreatedAt()
+	case accountuserquotacycle.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case accountuserquotacycle.FieldAccountID:
+		return m.AccountID()
+	case accountuserquotacycle.FieldStartsAt:
+		return m.StartsAt()
+	case accountuserquotacycle.FieldResetsAt:
+		return m.ResetsAt()
+	case accountuserquotacycle.FieldReady:
+		return m.Ready()
+	case accountuserquotacycle.FieldVersion:
+		return m.Version()
+	case accountuserquotacycle.FieldAccountStatsCost:
+		return m.AccountStatsCost()
+	case accountuserquotacycle.FieldEstimate:
+		return m.Estimate()
+	case accountuserquotacycle.FieldEstimateAt:
+		return m.EstimateAt()
+	case accountuserquotacycle.FieldEstimateSourceCycleID:
+		return m.EstimateSourceCycleID()
+	case accountuserquotacycle.FieldObservedAt:
+		return m.ObservedAt()
+	case accountuserquotacycle.FieldUsedPercent:
+		return m.UsedPercent()
+	case accountuserquotacycle.FieldMissingSince:
+		return m.MissingSince()
+	case accountuserquotacycle.FieldBackfillThroughID:
+		return m.BackfillThroughID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AccountUserQuotaCycleMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case accountuserquotacycle.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case accountuserquotacycle.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case accountuserquotacycle.FieldAccountID:
+		return m.OldAccountID(ctx)
+	case accountuserquotacycle.FieldStartsAt:
+		return m.OldStartsAt(ctx)
+	case accountuserquotacycle.FieldResetsAt:
+		return m.OldResetsAt(ctx)
+	case accountuserquotacycle.FieldReady:
+		return m.OldReady(ctx)
+	case accountuserquotacycle.FieldVersion:
+		return m.OldVersion(ctx)
+	case accountuserquotacycle.FieldAccountStatsCost:
+		return m.OldAccountStatsCost(ctx)
+	case accountuserquotacycle.FieldEstimate:
+		return m.OldEstimate(ctx)
+	case accountuserquotacycle.FieldEstimateAt:
+		return m.OldEstimateAt(ctx)
+	case accountuserquotacycle.FieldEstimateSourceCycleID:
+		return m.OldEstimateSourceCycleID(ctx)
+	case accountuserquotacycle.FieldObservedAt:
+		return m.OldObservedAt(ctx)
+	case accountuserquotacycle.FieldUsedPercent:
+		return m.OldUsedPercent(ctx)
+	case accountuserquotacycle.FieldMissingSince:
+		return m.OldMissingSince(ctx)
+	case accountuserquotacycle.FieldBackfillThroughID:
+		return m.OldBackfillThroughID(ctx)
+	}
+	return nil, fmt.Errorf("unknown AccountUserQuotaCycle field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaCycleMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotacycle.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case accountuserquotacycle.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case accountuserquotacycle.FieldAccountID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccountID(v)
+		return nil
+	case accountuserquotacycle.FieldStartsAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartsAt(v)
+		return nil
+	case accountuserquotacycle.FieldResetsAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResetsAt(v)
+		return nil
+	case accountuserquotacycle.FieldReady:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReady(v)
+		return nil
+	case accountuserquotacycle.FieldVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
+	case accountuserquotacycle.FieldAccountStatsCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccountStatsCost(v)
+		return nil
+	case accountuserquotacycle.FieldEstimate:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEstimate(v)
+		return nil
+	case accountuserquotacycle.FieldEstimateAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEstimateAt(v)
+		return nil
+	case accountuserquotacycle.FieldEstimateSourceCycleID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEstimateSourceCycleID(v)
+		return nil
+	case accountuserquotacycle.FieldObservedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetObservedAt(v)
+		return nil
+	case accountuserquotacycle.FieldUsedPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUsedPercent(v)
+		return nil
+	case accountuserquotacycle.FieldMissingSince:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMissingSince(v)
+		return nil
+	case accountuserquotacycle.FieldBackfillThroughID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBackfillThroughID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaCycle field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedFields() []string {
+	var fields []string
+	if m.addaccount_id != nil {
+		fields = append(fields, accountuserquotacycle.FieldAccountID)
+	}
+	if m.addversion != nil {
+		fields = append(fields, accountuserquotacycle.FieldVersion)
+	}
+	if m.addaccount_stats_cost != nil {
+		fields = append(fields, accountuserquotacycle.FieldAccountStatsCost)
+	}
+	if m.addestimate != nil {
+		fields = append(fields, accountuserquotacycle.FieldEstimate)
+	}
+	if m.addestimate_source_cycle_id != nil {
+		fields = append(fields, accountuserquotacycle.FieldEstimateSourceCycleID)
+	}
+	if m.addused_percent != nil {
+		fields = append(fields, accountuserquotacycle.FieldUsedPercent)
+	}
+	if m.addbackfill_through_id != nil {
+		fields = append(fields, accountuserquotacycle.FieldBackfillThroughID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AccountUserQuotaCycleMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotacycle.FieldAccountID:
+		return m.AddedAccountID()
+	case accountuserquotacycle.FieldVersion:
+		return m.AddedVersion()
+	case accountuserquotacycle.FieldAccountStatsCost:
+		return m.AddedAccountStatsCost()
+	case accountuserquotacycle.FieldEstimate:
+		return m.AddedEstimate()
+	case accountuserquotacycle.FieldEstimateSourceCycleID:
+		return m.AddedEstimateSourceCycleID()
+	case accountuserquotacycle.FieldUsedPercent:
+		return m.AddedUsedPercent()
+	case accountuserquotacycle.FieldBackfillThroughID:
+		return m.AddedBackfillThroughID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaCycleMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotacycle.FieldAccountID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAccountID(v)
+		return nil
+	case accountuserquotacycle.FieldVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVersion(v)
+		return nil
+	case accountuserquotacycle.FieldAccountStatsCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAccountStatsCost(v)
+		return nil
+	case accountuserquotacycle.FieldEstimate:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEstimate(v)
+		return nil
+	case accountuserquotacycle.FieldEstimateSourceCycleID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEstimateSourceCycleID(v)
+		return nil
+	case accountuserquotacycle.FieldUsedPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUsedPercent(v)
+		return nil
+	case accountuserquotacycle.FieldBackfillThroughID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBackfillThroughID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaCycle numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AccountUserQuotaCycleMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(accountuserquotacycle.FieldEstimate) {
+		fields = append(fields, accountuserquotacycle.FieldEstimate)
+	}
+	if m.FieldCleared(accountuserquotacycle.FieldEstimateAt) {
+		fields = append(fields, accountuserquotacycle.FieldEstimateAt)
+	}
+	if m.FieldCleared(accountuserquotacycle.FieldEstimateSourceCycleID) {
+		fields = append(fields, accountuserquotacycle.FieldEstimateSourceCycleID)
+	}
+	if m.FieldCleared(accountuserquotacycle.FieldObservedAt) {
+		fields = append(fields, accountuserquotacycle.FieldObservedAt)
+	}
+	if m.FieldCleared(accountuserquotacycle.FieldUsedPercent) {
+		fields = append(fields, accountuserquotacycle.FieldUsedPercent)
+	}
+	if m.FieldCleared(accountuserquotacycle.FieldMissingSince) {
+		fields = append(fields, accountuserquotacycle.FieldMissingSince)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AccountUserQuotaCycleMutation) ClearField(name string) error {
+	switch name {
+	case accountuserquotacycle.FieldEstimate:
+		m.ClearEstimate()
+		return nil
+	case accountuserquotacycle.FieldEstimateAt:
+		m.ClearEstimateAt()
+		return nil
+	case accountuserquotacycle.FieldEstimateSourceCycleID:
+		m.ClearEstimateSourceCycleID()
+		return nil
+	case accountuserquotacycle.FieldObservedAt:
+		m.ClearObservedAt()
+		return nil
+	case accountuserquotacycle.FieldUsedPercent:
+		m.ClearUsedPercent()
+		return nil
+	case accountuserquotacycle.FieldMissingSince:
+		m.ClearMissingSince()
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaCycle nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AccountUserQuotaCycleMutation) ResetField(name string) error {
+	switch name {
+	case accountuserquotacycle.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case accountuserquotacycle.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case accountuserquotacycle.FieldAccountID:
+		m.ResetAccountID()
+		return nil
+	case accountuserquotacycle.FieldStartsAt:
+		m.ResetStartsAt()
+		return nil
+	case accountuserquotacycle.FieldResetsAt:
+		m.ResetResetsAt()
+		return nil
+	case accountuserquotacycle.FieldReady:
+		m.ResetReady()
+		return nil
+	case accountuserquotacycle.FieldVersion:
+		m.ResetVersion()
+		return nil
+	case accountuserquotacycle.FieldAccountStatsCost:
+		m.ResetAccountStatsCost()
+		return nil
+	case accountuserquotacycle.FieldEstimate:
+		m.ResetEstimate()
+		return nil
+	case accountuserquotacycle.FieldEstimateAt:
+		m.ResetEstimateAt()
+		return nil
+	case accountuserquotacycle.FieldEstimateSourceCycleID:
+		m.ResetEstimateSourceCycleID()
+		return nil
+	case accountuserquotacycle.FieldObservedAt:
+		m.ResetObservedAt()
+		return nil
+	case accountuserquotacycle.FieldUsedPercent:
+		m.ResetUsedPercent()
+		return nil
+	case accountuserquotacycle.FieldMissingSince:
+		m.ResetMissingSince()
+		return nil
+	case accountuserquotacycle.FieldBackfillThroughID:
+		m.ResetBackfillThroughID()
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaCycle field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AccountUserQuotaCycleMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AccountUserQuotaCycleMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AccountUserQuotaCycleMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AccountUserQuotaCycleMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AccountUserQuotaCycleMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaCycle unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AccountUserQuotaCycleMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaCycle edge %s", name)
+}
+
+// AccountUserQuotaMemberMutation represents an operation that mutates the AccountUserQuotaMember nodes in the graph.
+type AccountUserQuotaMemberMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int64
+	created_at    *time.Time
+	updated_at    *time.Time
+	account_id    *int64
+	addaccount_id *int64
+	user_id       *int64
+	adduser_id    *int64
+	active        *bool
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*AccountUserQuotaMember, error)
+	predicates    []predicate.AccountUserQuotaMember
+}
+
+var _ ent.Mutation = (*AccountUserQuotaMemberMutation)(nil)
+
+// accountuserquotamemberOption allows management of the mutation configuration using functional options.
+type accountuserquotamemberOption func(*AccountUserQuotaMemberMutation)
+
+// newAccountUserQuotaMemberMutation creates new mutation for the AccountUserQuotaMember entity.
+func newAccountUserQuotaMemberMutation(c config, op Op, opts ...accountuserquotamemberOption) *AccountUserQuotaMemberMutation {
+	m := &AccountUserQuotaMemberMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAccountUserQuotaMember,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAccountUserQuotaMemberID sets the ID field of the mutation.
+func withAccountUserQuotaMemberID(id int64) accountuserquotamemberOption {
+	return func(m *AccountUserQuotaMemberMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AccountUserQuotaMember
+		)
+		m.oldValue = func(ctx context.Context) (*AccountUserQuotaMember, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AccountUserQuotaMember.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAccountUserQuotaMember sets the old AccountUserQuotaMember of the mutation.
+func withAccountUserQuotaMember(node *AccountUserQuotaMember) accountuserquotamemberOption {
+	return func(m *AccountUserQuotaMemberMutation) {
+		m.oldValue = func(context.Context) (*AccountUserQuotaMember, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AccountUserQuotaMemberMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AccountUserQuotaMemberMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AccountUserQuotaMemberMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AccountUserQuotaMemberMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AccountUserQuotaMember.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AccountUserQuotaMemberMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AccountUserQuotaMemberMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the AccountUserQuotaMember entity.
+// If the AccountUserQuotaMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaMemberMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AccountUserQuotaMemberMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *AccountUserQuotaMemberMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *AccountUserQuotaMemberMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the AccountUserQuotaMember entity.
+// If the AccountUserQuotaMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaMemberMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *AccountUserQuotaMemberMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetAccountID sets the "account_id" field.
+func (m *AccountUserQuotaMemberMutation) SetAccountID(i int64) {
+	m.account_id = &i
+	m.addaccount_id = nil
+}
+
+// AccountID returns the value of the "account_id" field in the mutation.
+func (m *AccountUserQuotaMemberMutation) AccountID() (r int64, exists bool) {
+	v := m.account_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccountID returns the old "account_id" field's value of the AccountUserQuotaMember entity.
+// If the AccountUserQuotaMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaMemberMutation) OldAccountID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccountID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccountID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccountID: %w", err)
+	}
+	return oldValue.AccountID, nil
+}
+
+// AddAccountID adds i to the "account_id" field.
+func (m *AccountUserQuotaMemberMutation) AddAccountID(i int64) {
+	if m.addaccount_id != nil {
+		*m.addaccount_id += i
+	} else {
+		m.addaccount_id = &i
+	}
+}
+
+// AddedAccountID returns the value that was added to the "account_id" field in this mutation.
+func (m *AccountUserQuotaMemberMutation) AddedAccountID() (r int64, exists bool) {
+	v := m.addaccount_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAccountID resets all changes to the "account_id" field.
+func (m *AccountUserQuotaMemberMutation) ResetAccountID() {
+	m.account_id = nil
+	m.addaccount_id = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *AccountUserQuotaMemberMutation) SetUserID(i int64) {
+	m.user_id = &i
+	m.adduser_id = nil
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *AccountUserQuotaMemberMutation) UserID() (r int64, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the AccountUserQuotaMember entity.
+// If the AccountUserQuotaMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaMemberMutation) OldUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// AddUserID adds i to the "user_id" field.
+func (m *AccountUserQuotaMemberMutation) AddUserID(i int64) {
+	if m.adduser_id != nil {
+		*m.adduser_id += i
+	} else {
+		m.adduser_id = &i
+	}
+}
+
+// AddedUserID returns the value that was added to the "user_id" field in this mutation.
+func (m *AccountUserQuotaMemberMutation) AddedUserID() (r int64, exists bool) {
+	v := m.adduser_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *AccountUserQuotaMemberMutation) ResetUserID() {
+	m.user_id = nil
+	m.adduser_id = nil
+}
+
+// SetActive sets the "active" field.
+func (m *AccountUserQuotaMemberMutation) SetActive(b bool) {
+	m.active = &b
+}
+
+// Active returns the value of the "active" field in the mutation.
+func (m *AccountUserQuotaMemberMutation) Active() (r bool, exists bool) {
+	v := m.active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActive returns the old "active" field's value of the AccountUserQuotaMember entity.
+// If the AccountUserQuotaMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaMemberMutation) OldActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActive: %w", err)
+	}
+	return oldValue.Active, nil
+}
+
+// ResetActive resets all changes to the "active" field.
+func (m *AccountUserQuotaMemberMutation) ResetActive() {
+	m.active = nil
+}
+
+// Where appends a list predicates to the AccountUserQuotaMemberMutation builder.
+func (m *AccountUserQuotaMemberMutation) Where(ps ...predicate.AccountUserQuotaMember) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AccountUserQuotaMemberMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AccountUserQuotaMemberMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AccountUserQuotaMember, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AccountUserQuotaMemberMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AccountUserQuotaMemberMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AccountUserQuotaMember).
+func (m *AccountUserQuotaMemberMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AccountUserQuotaMemberMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, accountuserquotamember.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, accountuserquotamember.FieldUpdatedAt)
+	}
+	if m.account_id != nil {
+		fields = append(fields, accountuserquotamember.FieldAccountID)
+	}
+	if m.user_id != nil {
+		fields = append(fields, accountuserquotamember.FieldUserID)
+	}
+	if m.active != nil {
+		fields = append(fields, accountuserquotamember.FieldActive)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AccountUserQuotaMemberMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotamember.FieldCreatedAt:
+		return m.CreatedAt()
+	case accountuserquotamember.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case accountuserquotamember.FieldAccountID:
+		return m.AccountID()
+	case accountuserquotamember.FieldUserID:
+		return m.UserID()
+	case accountuserquotamember.FieldActive:
+		return m.Active()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AccountUserQuotaMemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case accountuserquotamember.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case accountuserquotamember.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case accountuserquotamember.FieldAccountID:
+		return m.OldAccountID(ctx)
+	case accountuserquotamember.FieldUserID:
+		return m.OldUserID(ctx)
+	case accountuserquotamember.FieldActive:
+		return m.OldActive(ctx)
+	}
+	return nil, fmt.Errorf("unknown AccountUserQuotaMember field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaMemberMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotamember.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case accountuserquotamember.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case accountuserquotamember.FieldAccountID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccountID(v)
+		return nil
+	case accountuserquotamember.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case accountuserquotamember.FieldActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActive(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaMember field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AccountUserQuotaMemberMutation) AddedFields() []string {
+	var fields []string
+	if m.addaccount_id != nil {
+		fields = append(fields, accountuserquotamember.FieldAccountID)
+	}
+	if m.adduser_id != nil {
+		fields = append(fields, accountuserquotamember.FieldUserID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AccountUserQuotaMemberMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotamember.FieldAccountID:
+		return m.AddedAccountID()
+	case accountuserquotamember.FieldUserID:
+		return m.AddedUserID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaMemberMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotamember.FieldAccountID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAccountID(v)
+		return nil
+	case accountuserquotamember.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUserID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaMember numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AccountUserQuotaMemberMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AccountUserQuotaMemberMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AccountUserQuotaMemberMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaMember nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AccountUserQuotaMemberMutation) ResetField(name string) error {
+	switch name {
+	case accountuserquotamember.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case accountuserquotamember.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case accountuserquotamember.FieldAccountID:
+		m.ResetAccountID()
+		return nil
+	case accountuserquotamember.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case accountuserquotamember.FieldActive:
+		m.ResetActive()
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaMember field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AccountUserQuotaMemberMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AccountUserQuotaMemberMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AccountUserQuotaMemberMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AccountUserQuotaMemberMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AccountUserQuotaMemberMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AccountUserQuotaMemberMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AccountUserQuotaMemberMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaMember unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AccountUserQuotaMemberMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaMember edge %s", name)
+}
+
+// AccountUserQuotaPolicyMutation represents an operation that mutates the AccountUserQuotaPolicy nodes in the graph.
+type AccountUserQuotaPolicyMutation struct {
+	config
+	op                       Op
+	typ                      string
+	id                       *int64
+	created_at               *time.Time
+	updated_at               *time.Time
+	account_id               *int64
+	addaccount_id            *int64
+	upstream_account_id      *string
+	enabled                  *bool
+	enforced_at              *time.Time
+	config_version           *int64
+	addconfig_version        *int64
+	fallback_group_ids       *[]int64
+	appendfallback_group_ids []int64
+	carryover_seconds        *int
+	addcarryover_seconds     *int
+	updated_by               *int64
+	addupdated_by            *int64
+	history_note             *string
+	history_verified_at      *time.Time
+	clearedFields            map[string]struct{}
+	done                     bool
+	oldValue                 func(context.Context) (*AccountUserQuotaPolicy, error)
+	predicates               []predicate.AccountUserQuotaPolicy
+}
+
+var _ ent.Mutation = (*AccountUserQuotaPolicyMutation)(nil)
+
+// accountuserquotapolicyOption allows management of the mutation configuration using functional options.
+type accountuserquotapolicyOption func(*AccountUserQuotaPolicyMutation)
+
+// newAccountUserQuotaPolicyMutation creates new mutation for the AccountUserQuotaPolicy entity.
+func newAccountUserQuotaPolicyMutation(c config, op Op, opts ...accountuserquotapolicyOption) *AccountUserQuotaPolicyMutation {
+	m := &AccountUserQuotaPolicyMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAccountUserQuotaPolicy,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAccountUserQuotaPolicyID sets the ID field of the mutation.
+func withAccountUserQuotaPolicyID(id int64) accountuserquotapolicyOption {
+	return func(m *AccountUserQuotaPolicyMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AccountUserQuotaPolicy
+		)
+		m.oldValue = func(ctx context.Context) (*AccountUserQuotaPolicy, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AccountUserQuotaPolicy.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAccountUserQuotaPolicy sets the old AccountUserQuotaPolicy of the mutation.
+func withAccountUserQuotaPolicy(node *AccountUserQuotaPolicy) accountuserquotapolicyOption {
+	return func(m *AccountUserQuotaPolicyMutation) {
+		m.oldValue = func(context.Context) (*AccountUserQuotaPolicy, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AccountUserQuotaPolicyMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AccountUserQuotaPolicyMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AccountUserQuotaPolicyMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AccountUserQuotaPolicyMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AccountUserQuotaPolicy.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AccountUserQuotaPolicyMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AccountUserQuotaPolicyMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *AccountUserQuotaPolicyMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *AccountUserQuotaPolicyMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetAccountID sets the "account_id" field.
+func (m *AccountUserQuotaPolicyMutation) SetAccountID(i int64) {
+	m.account_id = &i
+	m.addaccount_id = nil
+}
+
+// AccountID returns the value of the "account_id" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) AccountID() (r int64, exists bool) {
+	v := m.account_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccountID returns the old "account_id" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldAccountID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccountID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccountID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccountID: %w", err)
+	}
+	return oldValue.AccountID, nil
+}
+
+// AddAccountID adds i to the "account_id" field.
+func (m *AccountUserQuotaPolicyMutation) AddAccountID(i int64) {
+	if m.addaccount_id != nil {
+		*m.addaccount_id += i
+	} else {
+		m.addaccount_id = &i
+	}
+}
+
+// AddedAccountID returns the value that was added to the "account_id" field in this mutation.
+func (m *AccountUserQuotaPolicyMutation) AddedAccountID() (r int64, exists bool) {
+	v := m.addaccount_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAccountID resets all changes to the "account_id" field.
+func (m *AccountUserQuotaPolicyMutation) ResetAccountID() {
+	m.account_id = nil
+	m.addaccount_id = nil
+}
+
+// SetUpstreamAccountID sets the "upstream_account_id" field.
+func (m *AccountUserQuotaPolicyMutation) SetUpstreamAccountID(s string) {
+	m.upstream_account_id = &s
+}
+
+// UpstreamAccountID returns the value of the "upstream_account_id" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) UpstreamAccountID() (r string, exists bool) {
+	v := m.upstream_account_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpstreamAccountID returns the old "upstream_account_id" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldUpstreamAccountID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpstreamAccountID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpstreamAccountID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpstreamAccountID: %w", err)
+	}
+	return oldValue.UpstreamAccountID, nil
+}
+
+// ResetUpstreamAccountID resets all changes to the "upstream_account_id" field.
+func (m *AccountUserQuotaPolicyMutation) ResetUpstreamAccountID() {
+	m.upstream_account_id = nil
+}
+
+// SetEnabled sets the "enabled" field.
+func (m *AccountUserQuotaPolicyMutation) SetEnabled(b bool) {
+	m.enabled = &b
+}
+
+// Enabled returns the value of the "enabled" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) Enabled() (r bool, exists bool) {
+	v := m.enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnabled returns the old "enabled" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnabled: %w", err)
+	}
+	return oldValue.Enabled, nil
+}
+
+// ResetEnabled resets all changes to the "enabled" field.
+func (m *AccountUserQuotaPolicyMutation) ResetEnabled() {
+	m.enabled = nil
+}
+
+// SetEnforcedAt sets the "enforced_at" field.
+func (m *AccountUserQuotaPolicyMutation) SetEnforcedAt(t time.Time) {
+	m.enforced_at = &t
+}
+
+// EnforcedAt returns the value of the "enforced_at" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) EnforcedAt() (r time.Time, exists bool) {
+	v := m.enforced_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnforcedAt returns the old "enforced_at" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldEnforcedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnforcedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnforcedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnforcedAt: %w", err)
+	}
+	return oldValue.EnforcedAt, nil
+}
+
+// ClearEnforcedAt clears the value of the "enforced_at" field.
+func (m *AccountUserQuotaPolicyMutation) ClearEnforcedAt() {
+	m.enforced_at = nil
+	m.clearedFields[accountuserquotapolicy.FieldEnforcedAt] = struct{}{}
+}
+
+// EnforcedAtCleared returns if the "enforced_at" field was cleared in this mutation.
+func (m *AccountUserQuotaPolicyMutation) EnforcedAtCleared() bool {
+	_, ok := m.clearedFields[accountuserquotapolicy.FieldEnforcedAt]
+	return ok
+}
+
+// ResetEnforcedAt resets all changes to the "enforced_at" field.
+func (m *AccountUserQuotaPolicyMutation) ResetEnforcedAt() {
+	m.enforced_at = nil
+	delete(m.clearedFields, accountuserquotapolicy.FieldEnforcedAt)
+}
+
+// SetConfigVersion sets the "config_version" field.
+func (m *AccountUserQuotaPolicyMutation) SetConfigVersion(i int64) {
+	m.config_version = &i
+	m.addconfig_version = nil
+}
+
+// ConfigVersion returns the value of the "config_version" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) ConfigVersion() (r int64, exists bool) {
+	v := m.config_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfigVersion returns the old "config_version" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldConfigVersion(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfigVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfigVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfigVersion: %w", err)
+	}
+	return oldValue.ConfigVersion, nil
+}
+
+// AddConfigVersion adds i to the "config_version" field.
+func (m *AccountUserQuotaPolicyMutation) AddConfigVersion(i int64) {
+	if m.addconfig_version != nil {
+		*m.addconfig_version += i
+	} else {
+		m.addconfig_version = &i
+	}
+}
+
+// AddedConfigVersion returns the value that was added to the "config_version" field in this mutation.
+func (m *AccountUserQuotaPolicyMutation) AddedConfigVersion() (r int64, exists bool) {
+	v := m.addconfig_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfigVersion resets all changes to the "config_version" field.
+func (m *AccountUserQuotaPolicyMutation) ResetConfigVersion() {
+	m.config_version = nil
+	m.addconfig_version = nil
+}
+
+// SetFallbackGroupIds sets the "fallback_group_ids" field.
+func (m *AccountUserQuotaPolicyMutation) SetFallbackGroupIds(i []int64) {
+	m.fallback_group_ids = &i
+	m.appendfallback_group_ids = nil
+}
+
+// FallbackGroupIds returns the value of the "fallback_group_ids" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) FallbackGroupIds() (r []int64, exists bool) {
+	v := m.fallback_group_ids
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFallbackGroupIds returns the old "fallback_group_ids" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldFallbackGroupIds(ctx context.Context) (v []int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFallbackGroupIds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFallbackGroupIds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFallbackGroupIds: %w", err)
+	}
+	return oldValue.FallbackGroupIds, nil
+}
+
+// AppendFallbackGroupIds adds i to the "fallback_group_ids" field.
+func (m *AccountUserQuotaPolicyMutation) AppendFallbackGroupIds(i []int64) {
+	m.appendfallback_group_ids = append(m.appendfallback_group_ids, i...)
+}
+
+// AppendedFallbackGroupIds returns the list of values that were appended to the "fallback_group_ids" field in this mutation.
+func (m *AccountUserQuotaPolicyMutation) AppendedFallbackGroupIds() ([]int64, bool) {
+	if len(m.appendfallback_group_ids) == 0 {
+		return nil, false
+	}
+	return m.appendfallback_group_ids, true
+}
+
+// ResetFallbackGroupIds resets all changes to the "fallback_group_ids" field.
+func (m *AccountUserQuotaPolicyMutation) ResetFallbackGroupIds() {
+	m.fallback_group_ids = nil
+	m.appendfallback_group_ids = nil
+}
+
+// SetCarryoverSeconds sets the "carryover_seconds" field.
+func (m *AccountUserQuotaPolicyMutation) SetCarryoverSeconds(i int) {
+	m.carryover_seconds = &i
+	m.addcarryover_seconds = nil
+}
+
+// CarryoverSeconds returns the value of the "carryover_seconds" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) CarryoverSeconds() (r int, exists bool) {
+	v := m.carryover_seconds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCarryoverSeconds returns the old "carryover_seconds" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldCarryoverSeconds(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCarryoverSeconds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCarryoverSeconds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCarryoverSeconds: %w", err)
+	}
+	return oldValue.CarryoverSeconds, nil
+}
+
+// AddCarryoverSeconds adds i to the "carryover_seconds" field.
+func (m *AccountUserQuotaPolicyMutation) AddCarryoverSeconds(i int) {
+	if m.addcarryover_seconds != nil {
+		*m.addcarryover_seconds += i
+	} else {
+		m.addcarryover_seconds = &i
+	}
+}
+
+// AddedCarryoverSeconds returns the value that was added to the "carryover_seconds" field in this mutation.
+func (m *AccountUserQuotaPolicyMutation) AddedCarryoverSeconds() (r int, exists bool) {
+	v := m.addcarryover_seconds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCarryoverSeconds resets all changes to the "carryover_seconds" field.
+func (m *AccountUserQuotaPolicyMutation) ResetCarryoverSeconds() {
+	m.carryover_seconds = nil
+	m.addcarryover_seconds = nil
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (m *AccountUserQuotaPolicyMutation) SetUpdatedBy(i int64) {
+	m.updated_by = &i
+	m.addupdated_by = nil
+}
+
+// UpdatedBy returns the value of the "updated_by" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) UpdatedBy() (r int64, exists bool) {
+	v := m.updated_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedBy returns the old "updated_by" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldUpdatedBy(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedBy: %w", err)
+	}
+	return oldValue.UpdatedBy, nil
+}
+
+// AddUpdatedBy adds i to the "updated_by" field.
+func (m *AccountUserQuotaPolicyMutation) AddUpdatedBy(i int64) {
+	if m.addupdated_by != nil {
+		*m.addupdated_by += i
+	} else {
+		m.addupdated_by = &i
+	}
+}
+
+// AddedUpdatedBy returns the value that was added to the "updated_by" field in this mutation.
+func (m *AccountUserQuotaPolicyMutation) AddedUpdatedBy() (r int64, exists bool) {
+	v := m.addupdated_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearUpdatedBy clears the value of the "updated_by" field.
+func (m *AccountUserQuotaPolicyMutation) ClearUpdatedBy() {
+	m.updated_by = nil
+	m.addupdated_by = nil
+	m.clearedFields[accountuserquotapolicy.FieldUpdatedBy] = struct{}{}
+}
+
+// UpdatedByCleared returns if the "updated_by" field was cleared in this mutation.
+func (m *AccountUserQuotaPolicyMutation) UpdatedByCleared() bool {
+	_, ok := m.clearedFields[accountuserquotapolicy.FieldUpdatedBy]
+	return ok
+}
+
+// ResetUpdatedBy resets all changes to the "updated_by" field.
+func (m *AccountUserQuotaPolicyMutation) ResetUpdatedBy() {
+	m.updated_by = nil
+	m.addupdated_by = nil
+	delete(m.clearedFields, accountuserquotapolicy.FieldUpdatedBy)
+}
+
+// SetHistoryNote sets the "history_note" field.
+func (m *AccountUserQuotaPolicyMutation) SetHistoryNote(s string) {
+	m.history_note = &s
+}
+
+// HistoryNote returns the value of the "history_note" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) HistoryNote() (r string, exists bool) {
+	v := m.history_note
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHistoryNote returns the old "history_note" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldHistoryNote(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHistoryNote is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHistoryNote requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHistoryNote: %w", err)
+	}
+	return oldValue.HistoryNote, nil
+}
+
+// ResetHistoryNote resets all changes to the "history_note" field.
+func (m *AccountUserQuotaPolicyMutation) ResetHistoryNote() {
+	m.history_note = nil
+}
+
+// SetHistoryVerifiedAt sets the "history_verified_at" field.
+func (m *AccountUserQuotaPolicyMutation) SetHistoryVerifiedAt(t time.Time) {
+	m.history_verified_at = &t
+}
+
+// HistoryVerifiedAt returns the value of the "history_verified_at" field in the mutation.
+func (m *AccountUserQuotaPolicyMutation) HistoryVerifiedAt() (r time.Time, exists bool) {
+	v := m.history_verified_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHistoryVerifiedAt returns the old "history_verified_at" field's value of the AccountUserQuotaPolicy entity.
+// If the AccountUserQuotaPolicy object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaPolicyMutation) OldHistoryVerifiedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHistoryVerifiedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHistoryVerifiedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHistoryVerifiedAt: %w", err)
+	}
+	return oldValue.HistoryVerifiedAt, nil
+}
+
+// ClearHistoryVerifiedAt clears the value of the "history_verified_at" field.
+func (m *AccountUserQuotaPolicyMutation) ClearHistoryVerifiedAt() {
+	m.history_verified_at = nil
+	m.clearedFields[accountuserquotapolicy.FieldHistoryVerifiedAt] = struct{}{}
+}
+
+// HistoryVerifiedAtCleared returns if the "history_verified_at" field was cleared in this mutation.
+func (m *AccountUserQuotaPolicyMutation) HistoryVerifiedAtCleared() bool {
+	_, ok := m.clearedFields[accountuserquotapolicy.FieldHistoryVerifiedAt]
+	return ok
+}
+
+// ResetHistoryVerifiedAt resets all changes to the "history_verified_at" field.
+func (m *AccountUserQuotaPolicyMutation) ResetHistoryVerifiedAt() {
+	m.history_verified_at = nil
+	delete(m.clearedFields, accountuserquotapolicy.FieldHistoryVerifiedAt)
+}
+
+// Where appends a list predicates to the AccountUserQuotaPolicyMutation builder.
+func (m *AccountUserQuotaPolicyMutation) Where(ps ...predicate.AccountUserQuotaPolicy) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AccountUserQuotaPolicyMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AccountUserQuotaPolicyMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AccountUserQuotaPolicy, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AccountUserQuotaPolicyMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AccountUserQuotaPolicyMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AccountUserQuotaPolicy).
+func (m *AccountUserQuotaPolicyMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AccountUserQuotaPolicyMutation) Fields() []string {
+	fields := make([]string, 0, 12)
+	if m.created_at != nil {
+		fields = append(fields, accountuserquotapolicy.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, accountuserquotapolicy.FieldUpdatedAt)
+	}
+	if m.account_id != nil {
+		fields = append(fields, accountuserquotapolicy.FieldAccountID)
+	}
+	if m.upstream_account_id != nil {
+		fields = append(fields, accountuserquotapolicy.FieldUpstreamAccountID)
+	}
+	if m.enabled != nil {
+		fields = append(fields, accountuserquotapolicy.FieldEnabled)
+	}
+	if m.enforced_at != nil {
+		fields = append(fields, accountuserquotapolicy.FieldEnforcedAt)
+	}
+	if m.config_version != nil {
+		fields = append(fields, accountuserquotapolicy.FieldConfigVersion)
+	}
+	if m.fallback_group_ids != nil {
+		fields = append(fields, accountuserquotapolicy.FieldFallbackGroupIds)
+	}
+	if m.carryover_seconds != nil {
+		fields = append(fields, accountuserquotapolicy.FieldCarryoverSeconds)
+	}
+	if m.updated_by != nil {
+		fields = append(fields, accountuserquotapolicy.FieldUpdatedBy)
+	}
+	if m.history_note != nil {
+		fields = append(fields, accountuserquotapolicy.FieldHistoryNote)
+	}
+	if m.history_verified_at != nil {
+		fields = append(fields, accountuserquotapolicy.FieldHistoryVerifiedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AccountUserQuotaPolicyMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotapolicy.FieldCreatedAt:
+		return m.CreatedAt()
+	case accountuserquotapolicy.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case accountuserquotapolicy.FieldAccountID:
+		return m.AccountID()
+	case accountuserquotapolicy.FieldUpstreamAccountID:
+		return m.UpstreamAccountID()
+	case accountuserquotapolicy.FieldEnabled:
+		return m.Enabled()
+	case accountuserquotapolicy.FieldEnforcedAt:
+		return m.EnforcedAt()
+	case accountuserquotapolicy.FieldConfigVersion:
+		return m.ConfigVersion()
+	case accountuserquotapolicy.FieldFallbackGroupIds:
+		return m.FallbackGroupIds()
+	case accountuserquotapolicy.FieldCarryoverSeconds:
+		return m.CarryoverSeconds()
+	case accountuserquotapolicy.FieldUpdatedBy:
+		return m.UpdatedBy()
+	case accountuserquotapolicy.FieldHistoryNote:
+		return m.HistoryNote()
+	case accountuserquotapolicy.FieldHistoryVerifiedAt:
+		return m.HistoryVerifiedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AccountUserQuotaPolicyMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case accountuserquotapolicy.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case accountuserquotapolicy.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case accountuserquotapolicy.FieldAccountID:
+		return m.OldAccountID(ctx)
+	case accountuserquotapolicy.FieldUpstreamAccountID:
+		return m.OldUpstreamAccountID(ctx)
+	case accountuserquotapolicy.FieldEnabled:
+		return m.OldEnabled(ctx)
+	case accountuserquotapolicy.FieldEnforcedAt:
+		return m.OldEnforcedAt(ctx)
+	case accountuserquotapolicy.FieldConfigVersion:
+		return m.OldConfigVersion(ctx)
+	case accountuserquotapolicy.FieldFallbackGroupIds:
+		return m.OldFallbackGroupIds(ctx)
+	case accountuserquotapolicy.FieldCarryoverSeconds:
+		return m.OldCarryoverSeconds(ctx)
+	case accountuserquotapolicy.FieldUpdatedBy:
+		return m.OldUpdatedBy(ctx)
+	case accountuserquotapolicy.FieldHistoryNote:
+		return m.OldHistoryNote(ctx)
+	case accountuserquotapolicy.FieldHistoryVerifiedAt:
+		return m.OldHistoryVerifiedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown AccountUserQuotaPolicy field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaPolicyMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotapolicy.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case accountuserquotapolicy.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case accountuserquotapolicy.FieldAccountID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccountID(v)
+		return nil
+	case accountuserquotapolicy.FieldUpstreamAccountID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpstreamAccountID(v)
+		return nil
+	case accountuserquotapolicy.FieldEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnabled(v)
+		return nil
+	case accountuserquotapolicy.FieldEnforcedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnforcedAt(v)
+		return nil
+	case accountuserquotapolicy.FieldConfigVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfigVersion(v)
+		return nil
+	case accountuserquotapolicy.FieldFallbackGroupIds:
+		v, ok := value.([]int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFallbackGroupIds(v)
+		return nil
+	case accountuserquotapolicy.FieldCarryoverSeconds:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCarryoverSeconds(v)
+		return nil
+	case accountuserquotapolicy.FieldUpdatedBy:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedBy(v)
+		return nil
+	case accountuserquotapolicy.FieldHistoryNote:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHistoryNote(v)
+		return nil
+	case accountuserquotapolicy.FieldHistoryVerifiedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHistoryVerifiedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaPolicy field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AccountUserQuotaPolicyMutation) AddedFields() []string {
+	var fields []string
+	if m.addaccount_id != nil {
+		fields = append(fields, accountuserquotapolicy.FieldAccountID)
+	}
+	if m.addconfig_version != nil {
+		fields = append(fields, accountuserquotapolicy.FieldConfigVersion)
+	}
+	if m.addcarryover_seconds != nil {
+		fields = append(fields, accountuserquotapolicy.FieldCarryoverSeconds)
+	}
+	if m.addupdated_by != nil {
+		fields = append(fields, accountuserquotapolicy.FieldUpdatedBy)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AccountUserQuotaPolicyMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotapolicy.FieldAccountID:
+		return m.AddedAccountID()
+	case accountuserquotapolicy.FieldConfigVersion:
+		return m.AddedConfigVersion()
+	case accountuserquotapolicy.FieldCarryoverSeconds:
+		return m.AddedCarryoverSeconds()
+	case accountuserquotapolicy.FieldUpdatedBy:
+		return m.AddedUpdatedBy()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaPolicyMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotapolicy.FieldAccountID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAccountID(v)
+		return nil
+	case accountuserquotapolicy.FieldConfigVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfigVersion(v)
+		return nil
+	case accountuserquotapolicy.FieldCarryoverSeconds:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCarryoverSeconds(v)
+		return nil
+	case accountuserquotapolicy.FieldUpdatedBy:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUpdatedBy(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaPolicy numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AccountUserQuotaPolicyMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(accountuserquotapolicy.FieldEnforcedAt) {
+		fields = append(fields, accountuserquotapolicy.FieldEnforcedAt)
+	}
+	if m.FieldCleared(accountuserquotapolicy.FieldUpdatedBy) {
+		fields = append(fields, accountuserquotapolicy.FieldUpdatedBy)
+	}
+	if m.FieldCleared(accountuserquotapolicy.FieldHistoryVerifiedAt) {
+		fields = append(fields, accountuserquotapolicy.FieldHistoryVerifiedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AccountUserQuotaPolicyMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AccountUserQuotaPolicyMutation) ClearField(name string) error {
+	switch name {
+	case accountuserquotapolicy.FieldEnforcedAt:
+		m.ClearEnforcedAt()
+		return nil
+	case accountuserquotapolicy.FieldUpdatedBy:
+		m.ClearUpdatedBy()
+		return nil
+	case accountuserquotapolicy.FieldHistoryVerifiedAt:
+		m.ClearHistoryVerifiedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaPolicy nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AccountUserQuotaPolicyMutation) ResetField(name string) error {
+	switch name {
+	case accountuserquotapolicy.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case accountuserquotapolicy.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case accountuserquotapolicy.FieldAccountID:
+		m.ResetAccountID()
+		return nil
+	case accountuserquotapolicy.FieldUpstreamAccountID:
+		m.ResetUpstreamAccountID()
+		return nil
+	case accountuserquotapolicy.FieldEnabled:
+		m.ResetEnabled()
+		return nil
+	case accountuserquotapolicy.FieldEnforcedAt:
+		m.ResetEnforcedAt()
+		return nil
+	case accountuserquotapolicy.FieldConfigVersion:
+		m.ResetConfigVersion()
+		return nil
+	case accountuserquotapolicy.FieldFallbackGroupIds:
+		m.ResetFallbackGroupIds()
+		return nil
+	case accountuserquotapolicy.FieldCarryoverSeconds:
+		m.ResetCarryoverSeconds()
+		return nil
+	case accountuserquotapolicy.FieldUpdatedBy:
+		m.ResetUpdatedBy()
+		return nil
+	case accountuserquotapolicy.FieldHistoryNote:
+		m.ResetHistoryNote()
+		return nil
+	case accountuserquotapolicy.FieldHistoryVerifiedAt:
+		m.ResetHistoryVerifiedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaPolicy field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AccountUserQuotaPolicyMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AccountUserQuotaPolicyMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AccountUserQuotaPolicyMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AccountUserQuotaPolicyMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AccountUserQuotaPolicyMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AccountUserQuotaPolicyMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AccountUserQuotaPolicyMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaPolicy unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AccountUserQuotaPolicyMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaPolicy edge %s", name)
+}
+
+// AccountUserQuotaReservationMutation represents an operation that mutates the AccountUserQuotaReservation nodes in the graph.
+type AccountUserQuotaReservationMutation struct {
+	config
+	op                          Op
+	typ                         string
+	id                          *int64
+	created_at                  *time.Time
+	updated_at                  *time.Time
+	token                       *string
+	account_id                  *int64
+	addaccount_id               *int64
+	cycle_id                    *int64
+	addcycle_id                 *int64
+	user_id                     *int64
+	adduser_id                  *int64
+	api_key_id                  *int64
+	addapi_key_id               *int64
+	original_group_id           *int64
+	addoriginal_group_id        *int64
+	effective_group_id          *int64
+	addeffective_group_id       *int64
+	subscription_id             *int64
+	addsubscription_id          *int64
+	request_id                  *string
+	pricing_at                  *time.Time
+	config_version              *int64
+	addconfig_version           *int64
+	reserved_cost               *float64
+	addreserved_cost            *float64
+	actual_cost                 *float64
+	addactual_cost              *float64
+	state                       *accountuserquotareservation.State
+	lease_until                 *time.Time
+	settled_at                  *time.Time
+	billing_request_id          *string
+	calibration_run_id          *string
+	calibration_ordinal         *int
+	addcalibration_ordinal      *int
+	calibration_max_requests    *int
+	addcalibration_max_requests *int
+	calibration_budget          *float64
+	addcalibration_budget       *float64
+	reconciliation_note         *string
+	clearedFields               map[string]struct{}
+	done                        bool
+	oldValue                    func(context.Context) (*AccountUserQuotaReservation, error)
+	predicates                  []predicate.AccountUserQuotaReservation
+}
+
+var _ ent.Mutation = (*AccountUserQuotaReservationMutation)(nil)
+
+// accountuserquotareservationOption allows management of the mutation configuration using functional options.
+type accountuserquotareservationOption func(*AccountUserQuotaReservationMutation)
+
+// newAccountUserQuotaReservationMutation creates new mutation for the AccountUserQuotaReservation entity.
+func newAccountUserQuotaReservationMutation(c config, op Op, opts ...accountuserquotareservationOption) *AccountUserQuotaReservationMutation {
+	m := &AccountUserQuotaReservationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAccountUserQuotaReservation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAccountUserQuotaReservationID sets the ID field of the mutation.
+func withAccountUserQuotaReservationID(id int64) accountuserquotareservationOption {
+	return func(m *AccountUserQuotaReservationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AccountUserQuotaReservation
+		)
+		m.oldValue = func(ctx context.Context) (*AccountUserQuotaReservation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AccountUserQuotaReservation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAccountUserQuotaReservation sets the old AccountUserQuotaReservation of the mutation.
+func withAccountUserQuotaReservation(node *AccountUserQuotaReservation) accountuserquotareservationOption {
+	return func(m *AccountUserQuotaReservationMutation) {
+		m.oldValue = func(context.Context) (*AccountUserQuotaReservation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AccountUserQuotaReservationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AccountUserQuotaReservationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AccountUserQuotaReservationMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AccountUserQuotaReservationMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AccountUserQuotaReservation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AccountUserQuotaReservationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AccountUserQuotaReservationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *AccountUserQuotaReservationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *AccountUserQuotaReservationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetToken sets the "token" field.
+func (m *AccountUserQuotaReservationMutation) SetToken(s string) {
+	m.token = &s
+}
+
+// Token returns the value of the "token" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) Token() (r string, exists bool) {
+	v := m.token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldToken returns the old "token" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldToken: %w", err)
+	}
+	return oldValue.Token, nil
+}
+
+// ResetToken resets all changes to the "token" field.
+func (m *AccountUserQuotaReservationMutation) ResetToken() {
+	m.token = nil
+}
+
+// SetAccountID sets the "account_id" field.
+func (m *AccountUserQuotaReservationMutation) SetAccountID(i int64) {
+	m.account_id = &i
+	m.addaccount_id = nil
+}
+
+// AccountID returns the value of the "account_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) AccountID() (r int64, exists bool) {
+	v := m.account_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccountID returns the old "account_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldAccountID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccountID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccountID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccountID: %w", err)
+	}
+	return oldValue.AccountID, nil
+}
+
+// AddAccountID adds i to the "account_id" field.
+func (m *AccountUserQuotaReservationMutation) AddAccountID(i int64) {
+	if m.addaccount_id != nil {
+		*m.addaccount_id += i
+	} else {
+		m.addaccount_id = &i
+	}
+}
+
+// AddedAccountID returns the value that was added to the "account_id" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedAccountID() (r int64, exists bool) {
+	v := m.addaccount_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAccountID resets all changes to the "account_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetAccountID() {
+	m.account_id = nil
+	m.addaccount_id = nil
+}
+
+// SetCycleID sets the "cycle_id" field.
+func (m *AccountUserQuotaReservationMutation) SetCycleID(i int64) {
+	m.cycle_id = &i
+	m.addcycle_id = nil
+}
+
+// CycleID returns the value of the "cycle_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) CycleID() (r int64, exists bool) {
+	v := m.cycle_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCycleID returns the old "cycle_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldCycleID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCycleID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCycleID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCycleID: %w", err)
+	}
+	return oldValue.CycleID, nil
+}
+
+// AddCycleID adds i to the "cycle_id" field.
+func (m *AccountUserQuotaReservationMutation) AddCycleID(i int64) {
+	if m.addcycle_id != nil {
+		*m.addcycle_id += i
+	} else {
+		m.addcycle_id = &i
+	}
+}
+
+// AddedCycleID returns the value that was added to the "cycle_id" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedCycleID() (r int64, exists bool) {
+	v := m.addcycle_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCycleID resets all changes to the "cycle_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetCycleID() {
+	m.cycle_id = nil
+	m.addcycle_id = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *AccountUserQuotaReservationMutation) SetUserID(i int64) {
+	m.user_id = &i
+	m.adduser_id = nil
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) UserID() (r int64, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// AddUserID adds i to the "user_id" field.
+func (m *AccountUserQuotaReservationMutation) AddUserID(i int64) {
+	if m.adduser_id != nil {
+		*m.adduser_id += i
+	} else {
+		m.adduser_id = &i
+	}
+}
+
+// AddedUserID returns the value that was added to the "user_id" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedUserID() (r int64, exists bool) {
+	v := m.adduser_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetUserID() {
+	m.user_id = nil
+	m.adduser_id = nil
+}
+
+// SetAPIKeyID sets the "api_key_id" field.
+func (m *AccountUserQuotaReservationMutation) SetAPIKeyID(i int64) {
+	m.api_key_id = &i
+	m.addapi_key_id = nil
+}
+
+// APIKeyID returns the value of the "api_key_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) APIKeyID() (r int64, exists bool) {
+	v := m.api_key_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAPIKeyID returns the old "api_key_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldAPIKeyID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAPIKeyID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAPIKeyID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAPIKeyID: %w", err)
+	}
+	return oldValue.APIKeyID, nil
+}
+
+// AddAPIKeyID adds i to the "api_key_id" field.
+func (m *AccountUserQuotaReservationMutation) AddAPIKeyID(i int64) {
+	if m.addapi_key_id != nil {
+		*m.addapi_key_id += i
+	} else {
+		m.addapi_key_id = &i
+	}
+}
+
+// AddedAPIKeyID returns the value that was added to the "api_key_id" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedAPIKeyID() (r int64, exists bool) {
+	v := m.addapi_key_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAPIKeyID resets all changes to the "api_key_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetAPIKeyID() {
+	m.api_key_id = nil
+	m.addapi_key_id = nil
+}
+
+// SetOriginalGroupID sets the "original_group_id" field.
+func (m *AccountUserQuotaReservationMutation) SetOriginalGroupID(i int64) {
+	m.original_group_id = &i
+	m.addoriginal_group_id = nil
+}
+
+// OriginalGroupID returns the value of the "original_group_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) OriginalGroupID() (r int64, exists bool) {
+	v := m.original_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOriginalGroupID returns the old "original_group_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldOriginalGroupID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOriginalGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOriginalGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOriginalGroupID: %w", err)
+	}
+	return oldValue.OriginalGroupID, nil
+}
+
+// AddOriginalGroupID adds i to the "original_group_id" field.
+func (m *AccountUserQuotaReservationMutation) AddOriginalGroupID(i int64) {
+	if m.addoriginal_group_id != nil {
+		*m.addoriginal_group_id += i
+	} else {
+		m.addoriginal_group_id = &i
+	}
+}
+
+// AddedOriginalGroupID returns the value that was added to the "original_group_id" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedOriginalGroupID() (r int64, exists bool) {
+	v := m.addoriginal_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearOriginalGroupID clears the value of the "original_group_id" field.
+func (m *AccountUserQuotaReservationMutation) ClearOriginalGroupID() {
+	m.original_group_id = nil
+	m.addoriginal_group_id = nil
+	m.clearedFields[accountuserquotareservation.FieldOriginalGroupID] = struct{}{}
+}
+
+// OriginalGroupIDCleared returns if the "original_group_id" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) OriginalGroupIDCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldOriginalGroupID]
+	return ok
+}
+
+// ResetOriginalGroupID resets all changes to the "original_group_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetOriginalGroupID() {
+	m.original_group_id = nil
+	m.addoriginal_group_id = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldOriginalGroupID)
+}
+
+// SetEffectiveGroupID sets the "effective_group_id" field.
+func (m *AccountUserQuotaReservationMutation) SetEffectiveGroupID(i int64) {
+	m.effective_group_id = &i
+	m.addeffective_group_id = nil
+}
+
+// EffectiveGroupID returns the value of the "effective_group_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) EffectiveGroupID() (r int64, exists bool) {
+	v := m.effective_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEffectiveGroupID returns the old "effective_group_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldEffectiveGroupID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEffectiveGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEffectiveGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEffectiveGroupID: %w", err)
+	}
+	return oldValue.EffectiveGroupID, nil
+}
+
+// AddEffectiveGroupID adds i to the "effective_group_id" field.
+func (m *AccountUserQuotaReservationMutation) AddEffectiveGroupID(i int64) {
+	if m.addeffective_group_id != nil {
+		*m.addeffective_group_id += i
+	} else {
+		m.addeffective_group_id = &i
+	}
+}
+
+// AddedEffectiveGroupID returns the value that was added to the "effective_group_id" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedEffectiveGroupID() (r int64, exists bool) {
+	v := m.addeffective_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEffectiveGroupID clears the value of the "effective_group_id" field.
+func (m *AccountUserQuotaReservationMutation) ClearEffectiveGroupID() {
+	m.effective_group_id = nil
+	m.addeffective_group_id = nil
+	m.clearedFields[accountuserquotareservation.FieldEffectiveGroupID] = struct{}{}
+}
+
+// EffectiveGroupIDCleared returns if the "effective_group_id" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) EffectiveGroupIDCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldEffectiveGroupID]
+	return ok
+}
+
+// ResetEffectiveGroupID resets all changes to the "effective_group_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetEffectiveGroupID() {
+	m.effective_group_id = nil
+	m.addeffective_group_id = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldEffectiveGroupID)
+}
+
+// SetSubscriptionID sets the "subscription_id" field.
+func (m *AccountUserQuotaReservationMutation) SetSubscriptionID(i int64) {
+	m.subscription_id = &i
+	m.addsubscription_id = nil
+}
+
+// SubscriptionID returns the value of the "subscription_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) SubscriptionID() (r int64, exists bool) {
+	v := m.subscription_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubscriptionID returns the old "subscription_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldSubscriptionID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubscriptionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubscriptionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubscriptionID: %w", err)
+	}
+	return oldValue.SubscriptionID, nil
+}
+
+// AddSubscriptionID adds i to the "subscription_id" field.
+func (m *AccountUserQuotaReservationMutation) AddSubscriptionID(i int64) {
+	if m.addsubscription_id != nil {
+		*m.addsubscription_id += i
+	} else {
+		m.addsubscription_id = &i
+	}
+}
+
+// AddedSubscriptionID returns the value that was added to the "subscription_id" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedSubscriptionID() (r int64, exists bool) {
+	v := m.addsubscription_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSubscriptionID clears the value of the "subscription_id" field.
+func (m *AccountUserQuotaReservationMutation) ClearSubscriptionID() {
+	m.subscription_id = nil
+	m.addsubscription_id = nil
+	m.clearedFields[accountuserquotareservation.FieldSubscriptionID] = struct{}{}
+}
+
+// SubscriptionIDCleared returns if the "subscription_id" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) SubscriptionIDCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldSubscriptionID]
+	return ok
+}
+
+// ResetSubscriptionID resets all changes to the "subscription_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetSubscriptionID() {
+	m.subscription_id = nil
+	m.addsubscription_id = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldSubscriptionID)
+}
+
+// SetRequestID sets the "request_id" field.
+func (m *AccountUserQuotaReservationMutation) SetRequestID(s string) {
+	m.request_id = &s
+}
+
+// RequestID returns the value of the "request_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) RequestID() (r string, exists bool) {
+	v := m.request_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRequestID returns the old "request_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldRequestID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRequestID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRequestID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRequestID: %w", err)
+	}
+	return oldValue.RequestID, nil
+}
+
+// ResetRequestID resets all changes to the "request_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetRequestID() {
+	m.request_id = nil
+}
+
+// SetPricingAt sets the "pricing_at" field.
+func (m *AccountUserQuotaReservationMutation) SetPricingAt(t time.Time) {
+	m.pricing_at = &t
+}
+
+// PricingAt returns the value of the "pricing_at" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) PricingAt() (r time.Time, exists bool) {
+	v := m.pricing_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPricingAt returns the old "pricing_at" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldPricingAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPricingAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPricingAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPricingAt: %w", err)
+	}
+	return oldValue.PricingAt, nil
+}
+
+// ResetPricingAt resets all changes to the "pricing_at" field.
+func (m *AccountUserQuotaReservationMutation) ResetPricingAt() {
+	m.pricing_at = nil
+}
+
+// SetConfigVersion sets the "config_version" field.
+func (m *AccountUserQuotaReservationMutation) SetConfigVersion(i int64) {
+	m.config_version = &i
+	m.addconfig_version = nil
+}
+
+// ConfigVersion returns the value of the "config_version" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) ConfigVersion() (r int64, exists bool) {
+	v := m.config_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfigVersion returns the old "config_version" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldConfigVersion(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfigVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfigVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfigVersion: %w", err)
+	}
+	return oldValue.ConfigVersion, nil
+}
+
+// AddConfigVersion adds i to the "config_version" field.
+func (m *AccountUserQuotaReservationMutation) AddConfigVersion(i int64) {
+	if m.addconfig_version != nil {
+		*m.addconfig_version += i
+	} else {
+		m.addconfig_version = &i
+	}
+}
+
+// AddedConfigVersion returns the value that was added to the "config_version" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedConfigVersion() (r int64, exists bool) {
+	v := m.addconfig_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfigVersion resets all changes to the "config_version" field.
+func (m *AccountUserQuotaReservationMutation) ResetConfigVersion() {
+	m.config_version = nil
+	m.addconfig_version = nil
+}
+
+// SetReservedCost sets the "reserved_cost" field.
+func (m *AccountUserQuotaReservationMutation) SetReservedCost(f float64) {
+	m.reserved_cost = &f
+	m.addreserved_cost = nil
+}
+
+// ReservedCost returns the value of the "reserved_cost" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) ReservedCost() (r float64, exists bool) {
+	v := m.reserved_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReservedCost returns the old "reserved_cost" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldReservedCost(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReservedCost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReservedCost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReservedCost: %w", err)
+	}
+	return oldValue.ReservedCost, nil
+}
+
+// AddReservedCost adds f to the "reserved_cost" field.
+func (m *AccountUserQuotaReservationMutation) AddReservedCost(f float64) {
+	if m.addreserved_cost != nil {
+		*m.addreserved_cost += f
+	} else {
+		m.addreserved_cost = &f
+	}
+}
+
+// AddedReservedCost returns the value that was added to the "reserved_cost" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedReservedCost() (r float64, exists bool) {
+	v := m.addreserved_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetReservedCost resets all changes to the "reserved_cost" field.
+func (m *AccountUserQuotaReservationMutation) ResetReservedCost() {
+	m.reserved_cost = nil
+	m.addreserved_cost = nil
+}
+
+// SetActualCost sets the "actual_cost" field.
+func (m *AccountUserQuotaReservationMutation) SetActualCost(f float64) {
+	m.actual_cost = &f
+	m.addactual_cost = nil
+}
+
+// ActualCost returns the value of the "actual_cost" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) ActualCost() (r float64, exists bool) {
+	v := m.actual_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActualCost returns the old "actual_cost" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldActualCost(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActualCost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActualCost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActualCost: %w", err)
+	}
+	return oldValue.ActualCost, nil
+}
+
+// AddActualCost adds f to the "actual_cost" field.
+func (m *AccountUserQuotaReservationMutation) AddActualCost(f float64) {
+	if m.addactual_cost != nil {
+		*m.addactual_cost += f
+	} else {
+		m.addactual_cost = &f
+	}
+}
+
+// AddedActualCost returns the value that was added to the "actual_cost" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedActualCost() (r float64, exists bool) {
+	v := m.addactual_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetActualCost resets all changes to the "actual_cost" field.
+func (m *AccountUserQuotaReservationMutation) ResetActualCost() {
+	m.actual_cost = nil
+	m.addactual_cost = nil
+}
+
+// SetState sets the "state" field.
+func (m *AccountUserQuotaReservationMutation) SetState(a accountuserquotareservation.State) {
+	m.state = &a
+}
+
+// State returns the value of the "state" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) State() (r accountuserquotareservation.State, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldState returns the old "state" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldState(ctx context.Context) (v accountuserquotareservation.State, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldState: %w", err)
+	}
+	return oldValue.State, nil
+}
+
+// ResetState resets all changes to the "state" field.
+func (m *AccountUserQuotaReservationMutation) ResetState() {
+	m.state = nil
+}
+
+// SetLeaseUntil sets the "lease_until" field.
+func (m *AccountUserQuotaReservationMutation) SetLeaseUntil(t time.Time) {
+	m.lease_until = &t
+}
+
+// LeaseUntil returns the value of the "lease_until" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) LeaseUntil() (r time.Time, exists bool) {
+	v := m.lease_until
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeaseUntil returns the old "lease_until" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldLeaseUntil(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeaseUntil is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeaseUntil requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeaseUntil: %w", err)
+	}
+	return oldValue.LeaseUntil, nil
+}
+
+// ResetLeaseUntil resets all changes to the "lease_until" field.
+func (m *AccountUserQuotaReservationMutation) ResetLeaseUntil() {
+	m.lease_until = nil
+}
+
+// SetSettledAt sets the "settled_at" field.
+func (m *AccountUserQuotaReservationMutation) SetSettledAt(t time.Time) {
+	m.settled_at = &t
+}
+
+// SettledAt returns the value of the "settled_at" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) SettledAt() (r time.Time, exists bool) {
+	v := m.settled_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSettledAt returns the old "settled_at" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldSettledAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSettledAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSettledAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSettledAt: %w", err)
+	}
+	return oldValue.SettledAt, nil
+}
+
+// ClearSettledAt clears the value of the "settled_at" field.
+func (m *AccountUserQuotaReservationMutation) ClearSettledAt() {
+	m.settled_at = nil
+	m.clearedFields[accountuserquotareservation.FieldSettledAt] = struct{}{}
+}
+
+// SettledAtCleared returns if the "settled_at" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) SettledAtCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldSettledAt]
+	return ok
+}
+
+// ResetSettledAt resets all changes to the "settled_at" field.
+func (m *AccountUserQuotaReservationMutation) ResetSettledAt() {
+	m.settled_at = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldSettledAt)
+}
+
+// SetBillingRequestID sets the "billing_request_id" field.
+func (m *AccountUserQuotaReservationMutation) SetBillingRequestID(s string) {
+	m.billing_request_id = &s
+}
+
+// BillingRequestID returns the value of the "billing_request_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) BillingRequestID() (r string, exists bool) {
+	v := m.billing_request_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBillingRequestID returns the old "billing_request_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldBillingRequestID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBillingRequestID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBillingRequestID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBillingRequestID: %w", err)
+	}
+	return oldValue.BillingRequestID, nil
+}
+
+// ClearBillingRequestID clears the value of the "billing_request_id" field.
+func (m *AccountUserQuotaReservationMutation) ClearBillingRequestID() {
+	m.billing_request_id = nil
+	m.clearedFields[accountuserquotareservation.FieldBillingRequestID] = struct{}{}
+}
+
+// BillingRequestIDCleared returns if the "billing_request_id" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) BillingRequestIDCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldBillingRequestID]
+	return ok
+}
+
+// ResetBillingRequestID resets all changes to the "billing_request_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetBillingRequestID() {
+	m.billing_request_id = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldBillingRequestID)
+}
+
+// SetCalibrationRunID sets the "calibration_run_id" field.
+func (m *AccountUserQuotaReservationMutation) SetCalibrationRunID(s string) {
+	m.calibration_run_id = &s
+}
+
+// CalibrationRunID returns the value of the "calibration_run_id" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) CalibrationRunID() (r string, exists bool) {
+	v := m.calibration_run_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCalibrationRunID returns the old "calibration_run_id" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldCalibrationRunID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCalibrationRunID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCalibrationRunID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCalibrationRunID: %w", err)
+	}
+	return oldValue.CalibrationRunID, nil
+}
+
+// ClearCalibrationRunID clears the value of the "calibration_run_id" field.
+func (m *AccountUserQuotaReservationMutation) ClearCalibrationRunID() {
+	m.calibration_run_id = nil
+	m.clearedFields[accountuserquotareservation.FieldCalibrationRunID] = struct{}{}
+}
+
+// CalibrationRunIDCleared returns if the "calibration_run_id" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) CalibrationRunIDCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldCalibrationRunID]
+	return ok
+}
+
+// ResetCalibrationRunID resets all changes to the "calibration_run_id" field.
+func (m *AccountUserQuotaReservationMutation) ResetCalibrationRunID() {
+	m.calibration_run_id = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldCalibrationRunID)
+}
+
+// SetCalibrationOrdinal sets the "calibration_ordinal" field.
+func (m *AccountUserQuotaReservationMutation) SetCalibrationOrdinal(i int) {
+	m.calibration_ordinal = &i
+	m.addcalibration_ordinal = nil
+}
+
+// CalibrationOrdinal returns the value of the "calibration_ordinal" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) CalibrationOrdinal() (r int, exists bool) {
+	v := m.calibration_ordinal
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCalibrationOrdinal returns the old "calibration_ordinal" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldCalibrationOrdinal(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCalibrationOrdinal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCalibrationOrdinal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCalibrationOrdinal: %w", err)
+	}
+	return oldValue.CalibrationOrdinal, nil
+}
+
+// AddCalibrationOrdinal adds i to the "calibration_ordinal" field.
+func (m *AccountUserQuotaReservationMutation) AddCalibrationOrdinal(i int) {
+	if m.addcalibration_ordinal != nil {
+		*m.addcalibration_ordinal += i
+	} else {
+		m.addcalibration_ordinal = &i
+	}
+}
+
+// AddedCalibrationOrdinal returns the value that was added to the "calibration_ordinal" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedCalibrationOrdinal() (r int, exists bool) {
+	v := m.addcalibration_ordinal
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCalibrationOrdinal clears the value of the "calibration_ordinal" field.
+func (m *AccountUserQuotaReservationMutation) ClearCalibrationOrdinal() {
+	m.calibration_ordinal = nil
+	m.addcalibration_ordinal = nil
+	m.clearedFields[accountuserquotareservation.FieldCalibrationOrdinal] = struct{}{}
+}
+
+// CalibrationOrdinalCleared returns if the "calibration_ordinal" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) CalibrationOrdinalCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldCalibrationOrdinal]
+	return ok
+}
+
+// ResetCalibrationOrdinal resets all changes to the "calibration_ordinal" field.
+func (m *AccountUserQuotaReservationMutation) ResetCalibrationOrdinal() {
+	m.calibration_ordinal = nil
+	m.addcalibration_ordinal = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldCalibrationOrdinal)
+}
+
+// SetCalibrationMaxRequests sets the "calibration_max_requests" field.
+func (m *AccountUserQuotaReservationMutation) SetCalibrationMaxRequests(i int) {
+	m.calibration_max_requests = &i
+	m.addcalibration_max_requests = nil
+}
+
+// CalibrationMaxRequests returns the value of the "calibration_max_requests" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) CalibrationMaxRequests() (r int, exists bool) {
+	v := m.calibration_max_requests
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCalibrationMaxRequests returns the old "calibration_max_requests" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldCalibrationMaxRequests(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCalibrationMaxRequests is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCalibrationMaxRequests requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCalibrationMaxRequests: %w", err)
+	}
+	return oldValue.CalibrationMaxRequests, nil
+}
+
+// AddCalibrationMaxRequests adds i to the "calibration_max_requests" field.
+func (m *AccountUserQuotaReservationMutation) AddCalibrationMaxRequests(i int) {
+	if m.addcalibration_max_requests != nil {
+		*m.addcalibration_max_requests += i
+	} else {
+		m.addcalibration_max_requests = &i
+	}
+}
+
+// AddedCalibrationMaxRequests returns the value that was added to the "calibration_max_requests" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedCalibrationMaxRequests() (r int, exists bool) {
+	v := m.addcalibration_max_requests
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCalibrationMaxRequests clears the value of the "calibration_max_requests" field.
+func (m *AccountUserQuotaReservationMutation) ClearCalibrationMaxRequests() {
+	m.calibration_max_requests = nil
+	m.addcalibration_max_requests = nil
+	m.clearedFields[accountuserquotareservation.FieldCalibrationMaxRequests] = struct{}{}
+}
+
+// CalibrationMaxRequestsCleared returns if the "calibration_max_requests" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) CalibrationMaxRequestsCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldCalibrationMaxRequests]
+	return ok
+}
+
+// ResetCalibrationMaxRequests resets all changes to the "calibration_max_requests" field.
+func (m *AccountUserQuotaReservationMutation) ResetCalibrationMaxRequests() {
+	m.calibration_max_requests = nil
+	m.addcalibration_max_requests = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldCalibrationMaxRequests)
+}
+
+// SetCalibrationBudget sets the "calibration_budget" field.
+func (m *AccountUserQuotaReservationMutation) SetCalibrationBudget(f float64) {
+	m.calibration_budget = &f
+	m.addcalibration_budget = nil
+}
+
+// CalibrationBudget returns the value of the "calibration_budget" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) CalibrationBudget() (r float64, exists bool) {
+	v := m.calibration_budget
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCalibrationBudget returns the old "calibration_budget" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldCalibrationBudget(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCalibrationBudget is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCalibrationBudget requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCalibrationBudget: %w", err)
+	}
+	return oldValue.CalibrationBudget, nil
+}
+
+// AddCalibrationBudget adds f to the "calibration_budget" field.
+func (m *AccountUserQuotaReservationMutation) AddCalibrationBudget(f float64) {
+	if m.addcalibration_budget != nil {
+		*m.addcalibration_budget += f
+	} else {
+		m.addcalibration_budget = &f
+	}
+}
+
+// AddedCalibrationBudget returns the value that was added to the "calibration_budget" field in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedCalibrationBudget() (r float64, exists bool) {
+	v := m.addcalibration_budget
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCalibrationBudget clears the value of the "calibration_budget" field.
+func (m *AccountUserQuotaReservationMutation) ClearCalibrationBudget() {
+	m.calibration_budget = nil
+	m.addcalibration_budget = nil
+	m.clearedFields[accountuserquotareservation.FieldCalibrationBudget] = struct{}{}
+}
+
+// CalibrationBudgetCleared returns if the "calibration_budget" field was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) CalibrationBudgetCleared() bool {
+	_, ok := m.clearedFields[accountuserquotareservation.FieldCalibrationBudget]
+	return ok
+}
+
+// ResetCalibrationBudget resets all changes to the "calibration_budget" field.
+func (m *AccountUserQuotaReservationMutation) ResetCalibrationBudget() {
+	m.calibration_budget = nil
+	m.addcalibration_budget = nil
+	delete(m.clearedFields, accountuserquotareservation.FieldCalibrationBudget)
+}
+
+// SetReconciliationNote sets the "reconciliation_note" field.
+func (m *AccountUserQuotaReservationMutation) SetReconciliationNote(s string) {
+	m.reconciliation_note = &s
+}
+
+// ReconciliationNote returns the value of the "reconciliation_note" field in the mutation.
+func (m *AccountUserQuotaReservationMutation) ReconciliationNote() (r string, exists bool) {
+	v := m.reconciliation_note
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReconciliationNote returns the old "reconciliation_note" field's value of the AccountUserQuotaReservation entity.
+// If the AccountUserQuotaReservation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaReservationMutation) OldReconciliationNote(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReconciliationNote is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReconciliationNote requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReconciliationNote: %w", err)
+	}
+	return oldValue.ReconciliationNote, nil
+}
+
+// ResetReconciliationNote resets all changes to the "reconciliation_note" field.
+func (m *AccountUserQuotaReservationMutation) ResetReconciliationNote() {
+	m.reconciliation_note = nil
+}
+
+// Where appends a list predicates to the AccountUserQuotaReservationMutation builder.
+func (m *AccountUserQuotaReservationMutation) Where(ps ...predicate.AccountUserQuotaReservation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AccountUserQuotaReservationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AccountUserQuotaReservationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AccountUserQuotaReservation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AccountUserQuotaReservationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AccountUserQuotaReservationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AccountUserQuotaReservation).
+func (m *AccountUserQuotaReservationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AccountUserQuotaReservationMutation) Fields() []string {
+	fields := make([]string, 0, 24)
+	if m.created_at != nil {
+		fields = append(fields, accountuserquotareservation.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, accountuserquotareservation.FieldUpdatedAt)
+	}
+	if m.token != nil {
+		fields = append(fields, accountuserquotareservation.FieldToken)
+	}
+	if m.account_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldAccountID)
+	}
+	if m.cycle_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldCycleID)
+	}
+	if m.user_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldUserID)
+	}
+	if m.api_key_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldAPIKeyID)
+	}
+	if m.original_group_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldOriginalGroupID)
+	}
+	if m.effective_group_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldEffectiveGroupID)
+	}
+	if m.subscription_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldSubscriptionID)
+	}
+	if m.request_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldRequestID)
+	}
+	if m.pricing_at != nil {
+		fields = append(fields, accountuserquotareservation.FieldPricingAt)
+	}
+	if m.config_version != nil {
+		fields = append(fields, accountuserquotareservation.FieldConfigVersion)
+	}
+	if m.reserved_cost != nil {
+		fields = append(fields, accountuserquotareservation.FieldReservedCost)
+	}
+	if m.actual_cost != nil {
+		fields = append(fields, accountuserquotareservation.FieldActualCost)
+	}
+	if m.state != nil {
+		fields = append(fields, accountuserquotareservation.FieldState)
+	}
+	if m.lease_until != nil {
+		fields = append(fields, accountuserquotareservation.FieldLeaseUntil)
+	}
+	if m.settled_at != nil {
+		fields = append(fields, accountuserquotareservation.FieldSettledAt)
+	}
+	if m.billing_request_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldBillingRequestID)
+	}
+	if m.calibration_run_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationRunID)
+	}
+	if m.calibration_ordinal != nil {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationOrdinal)
+	}
+	if m.calibration_max_requests != nil {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationMaxRequests)
+	}
+	if m.calibration_budget != nil {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationBudget)
+	}
+	if m.reconciliation_note != nil {
+		fields = append(fields, accountuserquotareservation.FieldReconciliationNote)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AccountUserQuotaReservationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotareservation.FieldCreatedAt:
+		return m.CreatedAt()
+	case accountuserquotareservation.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case accountuserquotareservation.FieldToken:
+		return m.Token()
+	case accountuserquotareservation.FieldAccountID:
+		return m.AccountID()
+	case accountuserquotareservation.FieldCycleID:
+		return m.CycleID()
+	case accountuserquotareservation.FieldUserID:
+		return m.UserID()
+	case accountuserquotareservation.FieldAPIKeyID:
+		return m.APIKeyID()
+	case accountuserquotareservation.FieldOriginalGroupID:
+		return m.OriginalGroupID()
+	case accountuserquotareservation.FieldEffectiveGroupID:
+		return m.EffectiveGroupID()
+	case accountuserquotareservation.FieldSubscriptionID:
+		return m.SubscriptionID()
+	case accountuserquotareservation.FieldRequestID:
+		return m.RequestID()
+	case accountuserquotareservation.FieldPricingAt:
+		return m.PricingAt()
+	case accountuserquotareservation.FieldConfigVersion:
+		return m.ConfigVersion()
+	case accountuserquotareservation.FieldReservedCost:
+		return m.ReservedCost()
+	case accountuserquotareservation.FieldActualCost:
+		return m.ActualCost()
+	case accountuserquotareservation.FieldState:
+		return m.State()
+	case accountuserquotareservation.FieldLeaseUntil:
+		return m.LeaseUntil()
+	case accountuserquotareservation.FieldSettledAt:
+		return m.SettledAt()
+	case accountuserquotareservation.FieldBillingRequestID:
+		return m.BillingRequestID()
+	case accountuserquotareservation.FieldCalibrationRunID:
+		return m.CalibrationRunID()
+	case accountuserquotareservation.FieldCalibrationOrdinal:
+		return m.CalibrationOrdinal()
+	case accountuserquotareservation.FieldCalibrationMaxRequests:
+		return m.CalibrationMaxRequests()
+	case accountuserquotareservation.FieldCalibrationBudget:
+		return m.CalibrationBudget()
+	case accountuserquotareservation.FieldReconciliationNote:
+		return m.ReconciliationNote()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AccountUserQuotaReservationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case accountuserquotareservation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case accountuserquotareservation.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case accountuserquotareservation.FieldToken:
+		return m.OldToken(ctx)
+	case accountuserquotareservation.FieldAccountID:
+		return m.OldAccountID(ctx)
+	case accountuserquotareservation.FieldCycleID:
+		return m.OldCycleID(ctx)
+	case accountuserquotareservation.FieldUserID:
+		return m.OldUserID(ctx)
+	case accountuserquotareservation.FieldAPIKeyID:
+		return m.OldAPIKeyID(ctx)
+	case accountuserquotareservation.FieldOriginalGroupID:
+		return m.OldOriginalGroupID(ctx)
+	case accountuserquotareservation.FieldEffectiveGroupID:
+		return m.OldEffectiveGroupID(ctx)
+	case accountuserquotareservation.FieldSubscriptionID:
+		return m.OldSubscriptionID(ctx)
+	case accountuserquotareservation.FieldRequestID:
+		return m.OldRequestID(ctx)
+	case accountuserquotareservation.FieldPricingAt:
+		return m.OldPricingAt(ctx)
+	case accountuserquotareservation.FieldConfigVersion:
+		return m.OldConfigVersion(ctx)
+	case accountuserquotareservation.FieldReservedCost:
+		return m.OldReservedCost(ctx)
+	case accountuserquotareservation.FieldActualCost:
+		return m.OldActualCost(ctx)
+	case accountuserquotareservation.FieldState:
+		return m.OldState(ctx)
+	case accountuserquotareservation.FieldLeaseUntil:
+		return m.OldLeaseUntil(ctx)
+	case accountuserquotareservation.FieldSettledAt:
+		return m.OldSettledAt(ctx)
+	case accountuserquotareservation.FieldBillingRequestID:
+		return m.OldBillingRequestID(ctx)
+	case accountuserquotareservation.FieldCalibrationRunID:
+		return m.OldCalibrationRunID(ctx)
+	case accountuserquotareservation.FieldCalibrationOrdinal:
+		return m.OldCalibrationOrdinal(ctx)
+	case accountuserquotareservation.FieldCalibrationMaxRequests:
+		return m.OldCalibrationMaxRequests(ctx)
+	case accountuserquotareservation.FieldCalibrationBudget:
+		return m.OldCalibrationBudget(ctx)
+	case accountuserquotareservation.FieldReconciliationNote:
+		return m.OldReconciliationNote(ctx)
+	}
+	return nil, fmt.Errorf("unknown AccountUserQuotaReservation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaReservationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotareservation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case accountuserquotareservation.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case accountuserquotareservation.FieldToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetToken(v)
+		return nil
+	case accountuserquotareservation.FieldAccountID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccountID(v)
+		return nil
+	case accountuserquotareservation.FieldCycleID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCycleID(v)
+		return nil
+	case accountuserquotareservation.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case accountuserquotareservation.FieldAPIKeyID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAPIKeyID(v)
+		return nil
+	case accountuserquotareservation.FieldOriginalGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOriginalGroupID(v)
+		return nil
+	case accountuserquotareservation.FieldEffectiveGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEffectiveGroupID(v)
+		return nil
+	case accountuserquotareservation.FieldSubscriptionID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubscriptionID(v)
+		return nil
+	case accountuserquotareservation.FieldRequestID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRequestID(v)
+		return nil
+	case accountuserquotareservation.FieldPricingAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPricingAt(v)
+		return nil
+	case accountuserquotareservation.FieldConfigVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfigVersion(v)
+		return nil
+	case accountuserquotareservation.FieldReservedCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReservedCost(v)
+		return nil
+	case accountuserquotareservation.FieldActualCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActualCost(v)
+		return nil
+	case accountuserquotareservation.FieldState:
+		v, ok := value.(accountuserquotareservation.State)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetState(v)
+		return nil
+	case accountuserquotareservation.FieldLeaseUntil:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeaseUntil(v)
+		return nil
+	case accountuserquotareservation.FieldSettledAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSettledAt(v)
+		return nil
+	case accountuserquotareservation.FieldBillingRequestID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBillingRequestID(v)
+		return nil
+	case accountuserquotareservation.FieldCalibrationRunID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCalibrationRunID(v)
+		return nil
+	case accountuserquotareservation.FieldCalibrationOrdinal:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCalibrationOrdinal(v)
+		return nil
+	case accountuserquotareservation.FieldCalibrationMaxRequests:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCalibrationMaxRequests(v)
+		return nil
+	case accountuserquotareservation.FieldCalibrationBudget:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCalibrationBudget(v)
+		return nil
+	case accountuserquotareservation.FieldReconciliationNote:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReconciliationNote(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaReservation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedFields() []string {
+	var fields []string
+	if m.addaccount_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldAccountID)
+	}
+	if m.addcycle_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldCycleID)
+	}
+	if m.adduser_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldUserID)
+	}
+	if m.addapi_key_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldAPIKeyID)
+	}
+	if m.addoriginal_group_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldOriginalGroupID)
+	}
+	if m.addeffective_group_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldEffectiveGroupID)
+	}
+	if m.addsubscription_id != nil {
+		fields = append(fields, accountuserquotareservation.FieldSubscriptionID)
+	}
+	if m.addconfig_version != nil {
+		fields = append(fields, accountuserquotareservation.FieldConfigVersion)
+	}
+	if m.addreserved_cost != nil {
+		fields = append(fields, accountuserquotareservation.FieldReservedCost)
+	}
+	if m.addactual_cost != nil {
+		fields = append(fields, accountuserquotareservation.FieldActualCost)
+	}
+	if m.addcalibration_ordinal != nil {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationOrdinal)
+	}
+	if m.addcalibration_max_requests != nil {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationMaxRequests)
+	}
+	if m.addcalibration_budget != nil {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationBudget)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AccountUserQuotaReservationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotareservation.FieldAccountID:
+		return m.AddedAccountID()
+	case accountuserquotareservation.FieldCycleID:
+		return m.AddedCycleID()
+	case accountuserquotareservation.FieldUserID:
+		return m.AddedUserID()
+	case accountuserquotareservation.FieldAPIKeyID:
+		return m.AddedAPIKeyID()
+	case accountuserquotareservation.FieldOriginalGroupID:
+		return m.AddedOriginalGroupID()
+	case accountuserquotareservation.FieldEffectiveGroupID:
+		return m.AddedEffectiveGroupID()
+	case accountuserquotareservation.FieldSubscriptionID:
+		return m.AddedSubscriptionID()
+	case accountuserquotareservation.FieldConfigVersion:
+		return m.AddedConfigVersion()
+	case accountuserquotareservation.FieldReservedCost:
+		return m.AddedReservedCost()
+	case accountuserquotareservation.FieldActualCost:
+		return m.AddedActualCost()
+	case accountuserquotareservation.FieldCalibrationOrdinal:
+		return m.AddedCalibrationOrdinal()
+	case accountuserquotareservation.FieldCalibrationMaxRequests:
+		return m.AddedCalibrationMaxRequests()
+	case accountuserquotareservation.FieldCalibrationBudget:
+		return m.AddedCalibrationBudget()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaReservationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotareservation.FieldAccountID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAccountID(v)
+		return nil
+	case accountuserquotareservation.FieldCycleID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCycleID(v)
+		return nil
+	case accountuserquotareservation.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUserID(v)
+		return nil
+	case accountuserquotareservation.FieldAPIKeyID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAPIKeyID(v)
+		return nil
+	case accountuserquotareservation.FieldOriginalGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOriginalGroupID(v)
+		return nil
+	case accountuserquotareservation.FieldEffectiveGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEffectiveGroupID(v)
+		return nil
+	case accountuserquotareservation.FieldSubscriptionID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSubscriptionID(v)
+		return nil
+	case accountuserquotareservation.FieldConfigVersion:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfigVersion(v)
+		return nil
+	case accountuserquotareservation.FieldReservedCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReservedCost(v)
+		return nil
+	case accountuserquotareservation.FieldActualCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddActualCost(v)
+		return nil
+	case accountuserquotareservation.FieldCalibrationOrdinal:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCalibrationOrdinal(v)
+		return nil
+	case accountuserquotareservation.FieldCalibrationMaxRequests:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCalibrationMaxRequests(v)
+		return nil
+	case accountuserquotareservation.FieldCalibrationBudget:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCalibrationBudget(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaReservation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AccountUserQuotaReservationMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(accountuserquotareservation.FieldOriginalGroupID) {
+		fields = append(fields, accountuserquotareservation.FieldOriginalGroupID)
+	}
+	if m.FieldCleared(accountuserquotareservation.FieldEffectiveGroupID) {
+		fields = append(fields, accountuserquotareservation.FieldEffectiveGroupID)
+	}
+	if m.FieldCleared(accountuserquotareservation.FieldSubscriptionID) {
+		fields = append(fields, accountuserquotareservation.FieldSubscriptionID)
+	}
+	if m.FieldCleared(accountuserquotareservation.FieldSettledAt) {
+		fields = append(fields, accountuserquotareservation.FieldSettledAt)
+	}
+	if m.FieldCleared(accountuserquotareservation.FieldBillingRequestID) {
+		fields = append(fields, accountuserquotareservation.FieldBillingRequestID)
+	}
+	if m.FieldCleared(accountuserquotareservation.FieldCalibrationRunID) {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationRunID)
+	}
+	if m.FieldCleared(accountuserquotareservation.FieldCalibrationOrdinal) {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationOrdinal)
+	}
+	if m.FieldCleared(accountuserquotareservation.FieldCalibrationMaxRequests) {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationMaxRequests)
+	}
+	if m.FieldCleared(accountuserquotareservation.FieldCalibrationBudget) {
+		fields = append(fields, accountuserquotareservation.FieldCalibrationBudget)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AccountUserQuotaReservationMutation) ClearField(name string) error {
+	switch name {
+	case accountuserquotareservation.FieldOriginalGroupID:
+		m.ClearOriginalGroupID()
+		return nil
+	case accountuserquotareservation.FieldEffectiveGroupID:
+		m.ClearEffectiveGroupID()
+		return nil
+	case accountuserquotareservation.FieldSubscriptionID:
+		m.ClearSubscriptionID()
+		return nil
+	case accountuserquotareservation.FieldSettledAt:
+		m.ClearSettledAt()
+		return nil
+	case accountuserquotareservation.FieldBillingRequestID:
+		m.ClearBillingRequestID()
+		return nil
+	case accountuserquotareservation.FieldCalibrationRunID:
+		m.ClearCalibrationRunID()
+		return nil
+	case accountuserquotareservation.FieldCalibrationOrdinal:
+		m.ClearCalibrationOrdinal()
+		return nil
+	case accountuserquotareservation.FieldCalibrationMaxRequests:
+		m.ClearCalibrationMaxRequests()
+		return nil
+	case accountuserquotareservation.FieldCalibrationBudget:
+		m.ClearCalibrationBudget()
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaReservation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AccountUserQuotaReservationMutation) ResetField(name string) error {
+	switch name {
+	case accountuserquotareservation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case accountuserquotareservation.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case accountuserquotareservation.FieldToken:
+		m.ResetToken()
+		return nil
+	case accountuserquotareservation.FieldAccountID:
+		m.ResetAccountID()
+		return nil
+	case accountuserquotareservation.FieldCycleID:
+		m.ResetCycleID()
+		return nil
+	case accountuserquotareservation.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case accountuserquotareservation.FieldAPIKeyID:
+		m.ResetAPIKeyID()
+		return nil
+	case accountuserquotareservation.FieldOriginalGroupID:
+		m.ResetOriginalGroupID()
+		return nil
+	case accountuserquotareservation.FieldEffectiveGroupID:
+		m.ResetEffectiveGroupID()
+		return nil
+	case accountuserquotareservation.FieldSubscriptionID:
+		m.ResetSubscriptionID()
+		return nil
+	case accountuserquotareservation.FieldRequestID:
+		m.ResetRequestID()
+		return nil
+	case accountuserquotareservation.FieldPricingAt:
+		m.ResetPricingAt()
+		return nil
+	case accountuserquotareservation.FieldConfigVersion:
+		m.ResetConfigVersion()
+		return nil
+	case accountuserquotareservation.FieldReservedCost:
+		m.ResetReservedCost()
+		return nil
+	case accountuserquotareservation.FieldActualCost:
+		m.ResetActualCost()
+		return nil
+	case accountuserquotareservation.FieldState:
+		m.ResetState()
+		return nil
+	case accountuserquotareservation.FieldLeaseUntil:
+		m.ResetLeaseUntil()
+		return nil
+	case accountuserquotareservation.FieldSettledAt:
+		m.ResetSettledAt()
+		return nil
+	case accountuserquotareservation.FieldBillingRequestID:
+		m.ResetBillingRequestID()
+		return nil
+	case accountuserquotareservation.FieldCalibrationRunID:
+		m.ResetCalibrationRunID()
+		return nil
+	case accountuserquotareservation.FieldCalibrationOrdinal:
+		m.ResetCalibrationOrdinal()
+		return nil
+	case accountuserquotareservation.FieldCalibrationMaxRequests:
+		m.ResetCalibrationMaxRequests()
+		return nil
+	case accountuserquotareservation.FieldCalibrationBudget:
+		m.ResetCalibrationBudget()
+		return nil
+	case accountuserquotareservation.FieldReconciliationNote:
+		m.ResetReconciliationNote()
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaReservation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AccountUserQuotaReservationMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AccountUserQuotaReservationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AccountUserQuotaReservationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AccountUserQuotaReservationMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AccountUserQuotaReservationMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaReservation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AccountUserQuotaReservationMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaReservation edge %s", name)
+}
+
+// AccountUserQuotaUsageMutation represents an operation that mutates the AccountUserQuotaUsage nodes in the graph.
+type AccountUserQuotaUsageMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	created_at       *time.Time
+	updated_at       *time.Time
+	cycle_id         *int64
+	addcycle_id      *int64
+	user_id          *int64
+	adduser_id       *int64
+	actual_cost      *float64
+	addactual_cost   *float64
+	reserved_cost    *float64
+	addreserved_cost *float64
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*AccountUserQuotaUsage, error)
+	predicates       []predicate.AccountUserQuotaUsage
+}
+
+var _ ent.Mutation = (*AccountUserQuotaUsageMutation)(nil)
+
+// accountuserquotausageOption allows management of the mutation configuration using functional options.
+type accountuserquotausageOption func(*AccountUserQuotaUsageMutation)
+
+// newAccountUserQuotaUsageMutation creates new mutation for the AccountUserQuotaUsage entity.
+func newAccountUserQuotaUsageMutation(c config, op Op, opts ...accountuserquotausageOption) *AccountUserQuotaUsageMutation {
+	m := &AccountUserQuotaUsageMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeAccountUserQuotaUsage,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withAccountUserQuotaUsageID sets the ID field of the mutation.
+func withAccountUserQuotaUsageID(id int64) accountuserquotausageOption {
+	return func(m *AccountUserQuotaUsageMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *AccountUserQuotaUsage
+		)
+		m.oldValue = func(ctx context.Context) (*AccountUserQuotaUsage, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().AccountUserQuotaUsage.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withAccountUserQuotaUsage sets the old AccountUserQuotaUsage of the mutation.
+func withAccountUserQuotaUsage(node *AccountUserQuotaUsage) accountuserquotausageOption {
+	return func(m *AccountUserQuotaUsageMutation) {
+		m.oldValue = func(context.Context) (*AccountUserQuotaUsage, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m AccountUserQuotaUsageMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m AccountUserQuotaUsageMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *AccountUserQuotaUsageMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *AccountUserQuotaUsageMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().AccountUserQuotaUsage.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *AccountUserQuotaUsageMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *AccountUserQuotaUsageMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the AccountUserQuotaUsage entity.
+// If the AccountUserQuotaUsage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaUsageMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *AccountUserQuotaUsageMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *AccountUserQuotaUsageMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *AccountUserQuotaUsageMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the AccountUserQuotaUsage entity.
+// If the AccountUserQuotaUsage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaUsageMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *AccountUserQuotaUsageMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetCycleID sets the "cycle_id" field.
+func (m *AccountUserQuotaUsageMutation) SetCycleID(i int64) {
+	m.cycle_id = &i
+	m.addcycle_id = nil
+}
+
+// CycleID returns the value of the "cycle_id" field in the mutation.
+func (m *AccountUserQuotaUsageMutation) CycleID() (r int64, exists bool) {
+	v := m.cycle_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCycleID returns the old "cycle_id" field's value of the AccountUserQuotaUsage entity.
+// If the AccountUserQuotaUsage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaUsageMutation) OldCycleID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCycleID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCycleID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCycleID: %w", err)
+	}
+	return oldValue.CycleID, nil
+}
+
+// AddCycleID adds i to the "cycle_id" field.
+func (m *AccountUserQuotaUsageMutation) AddCycleID(i int64) {
+	if m.addcycle_id != nil {
+		*m.addcycle_id += i
+	} else {
+		m.addcycle_id = &i
+	}
+}
+
+// AddedCycleID returns the value that was added to the "cycle_id" field in this mutation.
+func (m *AccountUserQuotaUsageMutation) AddedCycleID() (r int64, exists bool) {
+	v := m.addcycle_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCycleID resets all changes to the "cycle_id" field.
+func (m *AccountUserQuotaUsageMutation) ResetCycleID() {
+	m.cycle_id = nil
+	m.addcycle_id = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *AccountUserQuotaUsageMutation) SetUserID(i int64) {
+	m.user_id = &i
+	m.adduser_id = nil
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *AccountUserQuotaUsageMutation) UserID() (r int64, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the AccountUserQuotaUsage entity.
+// If the AccountUserQuotaUsage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaUsageMutation) OldUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// AddUserID adds i to the "user_id" field.
+func (m *AccountUserQuotaUsageMutation) AddUserID(i int64) {
+	if m.adduser_id != nil {
+		*m.adduser_id += i
+	} else {
+		m.adduser_id = &i
+	}
+}
+
+// AddedUserID returns the value that was added to the "user_id" field in this mutation.
+func (m *AccountUserQuotaUsageMutation) AddedUserID() (r int64, exists bool) {
+	v := m.adduser_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *AccountUserQuotaUsageMutation) ResetUserID() {
+	m.user_id = nil
+	m.adduser_id = nil
+}
+
+// SetActualCost sets the "actual_cost" field.
+func (m *AccountUserQuotaUsageMutation) SetActualCost(f float64) {
+	m.actual_cost = &f
+	m.addactual_cost = nil
+}
+
+// ActualCost returns the value of the "actual_cost" field in the mutation.
+func (m *AccountUserQuotaUsageMutation) ActualCost() (r float64, exists bool) {
+	v := m.actual_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActualCost returns the old "actual_cost" field's value of the AccountUserQuotaUsage entity.
+// If the AccountUserQuotaUsage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaUsageMutation) OldActualCost(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActualCost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActualCost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActualCost: %w", err)
+	}
+	return oldValue.ActualCost, nil
+}
+
+// AddActualCost adds f to the "actual_cost" field.
+func (m *AccountUserQuotaUsageMutation) AddActualCost(f float64) {
+	if m.addactual_cost != nil {
+		*m.addactual_cost += f
+	} else {
+		m.addactual_cost = &f
+	}
+}
+
+// AddedActualCost returns the value that was added to the "actual_cost" field in this mutation.
+func (m *AccountUserQuotaUsageMutation) AddedActualCost() (r float64, exists bool) {
+	v := m.addactual_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetActualCost resets all changes to the "actual_cost" field.
+func (m *AccountUserQuotaUsageMutation) ResetActualCost() {
+	m.actual_cost = nil
+	m.addactual_cost = nil
+}
+
+// SetReservedCost sets the "reserved_cost" field.
+func (m *AccountUserQuotaUsageMutation) SetReservedCost(f float64) {
+	m.reserved_cost = &f
+	m.addreserved_cost = nil
+}
+
+// ReservedCost returns the value of the "reserved_cost" field in the mutation.
+func (m *AccountUserQuotaUsageMutation) ReservedCost() (r float64, exists bool) {
+	v := m.reserved_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReservedCost returns the old "reserved_cost" field's value of the AccountUserQuotaUsage entity.
+// If the AccountUserQuotaUsage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AccountUserQuotaUsageMutation) OldReservedCost(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReservedCost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReservedCost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReservedCost: %w", err)
+	}
+	return oldValue.ReservedCost, nil
+}
+
+// AddReservedCost adds f to the "reserved_cost" field.
+func (m *AccountUserQuotaUsageMutation) AddReservedCost(f float64) {
+	if m.addreserved_cost != nil {
+		*m.addreserved_cost += f
+	} else {
+		m.addreserved_cost = &f
+	}
+}
+
+// AddedReservedCost returns the value that was added to the "reserved_cost" field in this mutation.
+func (m *AccountUserQuotaUsageMutation) AddedReservedCost() (r float64, exists bool) {
+	v := m.addreserved_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetReservedCost resets all changes to the "reserved_cost" field.
+func (m *AccountUserQuotaUsageMutation) ResetReservedCost() {
+	m.reserved_cost = nil
+	m.addreserved_cost = nil
+}
+
+// Where appends a list predicates to the AccountUserQuotaUsageMutation builder.
+func (m *AccountUserQuotaUsageMutation) Where(ps ...predicate.AccountUserQuotaUsage) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the AccountUserQuotaUsageMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *AccountUserQuotaUsageMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.AccountUserQuotaUsage, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *AccountUserQuotaUsageMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *AccountUserQuotaUsageMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (AccountUserQuotaUsage).
+func (m *AccountUserQuotaUsageMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *AccountUserQuotaUsageMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.created_at != nil {
+		fields = append(fields, accountuserquotausage.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, accountuserquotausage.FieldUpdatedAt)
+	}
+	if m.cycle_id != nil {
+		fields = append(fields, accountuserquotausage.FieldCycleID)
+	}
+	if m.user_id != nil {
+		fields = append(fields, accountuserquotausage.FieldUserID)
+	}
+	if m.actual_cost != nil {
+		fields = append(fields, accountuserquotausage.FieldActualCost)
+	}
+	if m.reserved_cost != nil {
+		fields = append(fields, accountuserquotausage.FieldReservedCost)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *AccountUserQuotaUsageMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotausage.FieldCreatedAt:
+		return m.CreatedAt()
+	case accountuserquotausage.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case accountuserquotausage.FieldCycleID:
+		return m.CycleID()
+	case accountuserquotausage.FieldUserID:
+		return m.UserID()
+	case accountuserquotausage.FieldActualCost:
+		return m.ActualCost()
+	case accountuserquotausage.FieldReservedCost:
+		return m.ReservedCost()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *AccountUserQuotaUsageMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case accountuserquotausage.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case accountuserquotausage.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case accountuserquotausage.FieldCycleID:
+		return m.OldCycleID(ctx)
+	case accountuserquotausage.FieldUserID:
+		return m.OldUserID(ctx)
+	case accountuserquotausage.FieldActualCost:
+		return m.OldActualCost(ctx)
+	case accountuserquotausage.FieldReservedCost:
+		return m.OldReservedCost(ctx)
+	}
+	return nil, fmt.Errorf("unknown AccountUserQuotaUsage field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaUsageMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotausage.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case accountuserquotausage.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case accountuserquotausage.FieldCycleID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCycleID(v)
+		return nil
+	case accountuserquotausage.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case accountuserquotausage.FieldActualCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActualCost(v)
+		return nil
+	case accountuserquotausage.FieldReservedCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReservedCost(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaUsage field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *AccountUserQuotaUsageMutation) AddedFields() []string {
+	var fields []string
+	if m.addcycle_id != nil {
+		fields = append(fields, accountuserquotausage.FieldCycleID)
+	}
+	if m.adduser_id != nil {
+		fields = append(fields, accountuserquotausage.FieldUserID)
+	}
+	if m.addactual_cost != nil {
+		fields = append(fields, accountuserquotausage.FieldActualCost)
+	}
+	if m.addreserved_cost != nil {
+		fields = append(fields, accountuserquotausage.FieldReservedCost)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *AccountUserQuotaUsageMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case accountuserquotausage.FieldCycleID:
+		return m.AddedCycleID()
+	case accountuserquotausage.FieldUserID:
+		return m.AddedUserID()
+	case accountuserquotausage.FieldActualCost:
+		return m.AddedActualCost()
+	case accountuserquotausage.FieldReservedCost:
+		return m.AddedReservedCost()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *AccountUserQuotaUsageMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case accountuserquotausage.FieldCycleID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCycleID(v)
+		return nil
+	case accountuserquotausage.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUserID(v)
+		return nil
+	case accountuserquotausage.FieldActualCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddActualCost(v)
+		return nil
+	case accountuserquotausage.FieldReservedCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddReservedCost(v)
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaUsage numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *AccountUserQuotaUsageMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *AccountUserQuotaUsageMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *AccountUserQuotaUsageMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaUsage nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *AccountUserQuotaUsageMutation) ResetField(name string) error {
+	switch name {
+	case accountuserquotausage.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case accountuserquotausage.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case accountuserquotausage.FieldCycleID:
+		m.ResetCycleID()
+		return nil
+	case accountuserquotausage.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case accountuserquotausage.FieldActualCost:
+		m.ResetActualCost()
+		return nil
+	case accountuserquotausage.FieldReservedCost:
+		m.ResetReservedCost()
+		return nil
+	}
+	return fmt.Errorf("unknown AccountUserQuotaUsage field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *AccountUserQuotaUsageMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *AccountUserQuotaUsageMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *AccountUserQuotaUsageMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *AccountUserQuotaUsageMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *AccountUserQuotaUsageMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *AccountUserQuotaUsageMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *AccountUserQuotaUsageMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaUsage unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *AccountUserQuotaUsageMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown AccountUserQuotaUsage edge %s", name)
 }
 
 // AnnouncementMutation represents an operation that mutates the Announcement nodes in the graph.
@@ -44668,86 +50768,90 @@ func (m *UsageCleanupTaskMutation) ResetEdge(name string) error {
 // UsageLogMutation represents an operation that mutates the UsageLog nodes in the graph.
 type UsageLogMutation struct {
 	config
-	op                           Op
-	typ                          string
-	id                           *int64
-	request_id                   *string
-	model                        *string
-	requested_model              *string
-	upstream_model               *string
-	upstream_response_model      *string
-	upstream_model_mismatch      *bool
-	channel_id                   *int64
-	addchannel_id                *int64
-	model_mapping_chain          *string
-	billing_tier                 *string
-	billing_mode                 *string
-	input_tokens                 *int
-	addinput_tokens              *int
-	output_tokens                *int
-	addoutput_tokens             *int
-	cache_creation_tokens        *int
-	addcache_creation_tokens     *int
-	cache_read_tokens            *int
-	addcache_read_tokens         *int
-	cache_creation_5m_tokens     *int
-	addcache_creation_5m_tokens  *int
-	cache_creation_1h_tokens     *int
-	addcache_creation_1h_tokens  *int
-	input_cost                   *float64
-	addinput_cost                *float64
-	output_cost                  *float64
-	addoutput_cost               *float64
-	cache_creation_cost          *float64
-	addcache_creation_cost       *float64
-	cache_read_cost              *float64
-	addcache_read_cost           *float64
-	total_cost                   *float64
-	addtotal_cost                *float64
-	actual_cost                  *float64
-	addactual_cost               *float64
-	rate_multiplier              *float64
-	addrate_multiplier           *float64
-	long_context_billing_applied *bool
-	account_rate_multiplier      *float64
-	addaccount_rate_multiplier   *float64
-	billing_type                 *int8
-	addbilling_type              *int8
-	stream                       *bool
-	duration_ms                  *int
-	addduration_ms               *int
-	first_token_ms               *int
-	addfirst_token_ms            *int
-	user_agent                   *string
-	ip_address                   *string
-	image_count                  *int
-	addimage_count               *int
-	image_size                   *string
-	image_input_size             *string
-	image_output_size            *string
-	image_size_source            *string
-	image_size_breakdown         *map[string]int
-	video_count                  *int
-	addvideo_count               *int
-	video_resolution             *string
-	video_duration_seconds       *int
-	addvideo_duration_seconds    *int
-	cache_ttl_overridden         *bool
-	created_at                   *time.Time
-	clearedFields                map[string]struct{}
-	user                         *int64
-	cleareduser                  bool
-	api_key                      *int64
-	clearedapi_key               bool
-	account                      *int64
-	clearedaccount               bool
-	group                        *int64
-	clearedgroup                 bool
-	subscription                 *int64
-	clearedsubscription          bool
-	done                         bool
-	oldValue                     func(context.Context) (*UsageLog, error)
-	predicates                   []predicate.UsageLog
+	op                             Op
+	typ                            string
+	id                             *int64
+	account_user_quota_cycle_id    *int64
+	addaccount_user_quota_cycle_id *int64
+	original_group_id              *int64
+	addoriginal_group_id           *int64
+	request_id                     *string
+	model                          *string
+	requested_model                *string
+	upstream_model                 *string
+	upstream_response_model        *string
+	upstream_model_mismatch        *bool
+	channel_id                     *int64
+	addchannel_id                  *int64
+	model_mapping_chain            *string
+	billing_tier                   *string
+	billing_mode                   *string
+	input_tokens                   *int
+	addinput_tokens                *int
+	output_tokens                  *int
+	addoutput_tokens               *int
+	cache_creation_tokens          *int
+	addcache_creation_tokens       *int
+	cache_read_tokens              *int
+	addcache_read_tokens           *int
+	cache_creation_5m_tokens       *int
+	addcache_creation_5m_tokens    *int
+	cache_creation_1h_tokens       *int
+	addcache_creation_1h_tokens    *int
+	input_cost                     *float64
+	addinput_cost                  *float64
+	output_cost                    *float64
+	addoutput_cost                 *float64
+	cache_creation_cost            *float64
+	addcache_creation_cost         *float64
+	cache_read_cost                *float64
+	addcache_read_cost             *float64
+	total_cost                     *float64
+	addtotal_cost                  *float64
+	actual_cost                    *float64
+	addactual_cost                 *float64
+	rate_multiplier                *float64
+	addrate_multiplier             *float64
+	long_context_billing_applied   *bool
+	account_rate_multiplier        *float64
+	addaccount_rate_multiplier     *float64
+	billing_type                   *int8
+	addbilling_type                *int8
+	stream                         *bool
+	duration_ms                    *int
+	addduration_ms                 *int
+	first_token_ms                 *int
+	addfirst_token_ms              *int
+	user_agent                     *string
+	ip_address                     *string
+	image_count                    *int
+	addimage_count                 *int
+	image_size                     *string
+	image_input_size               *string
+	image_output_size              *string
+	image_size_source              *string
+	image_size_breakdown           *map[string]int
+	video_count                    *int
+	addvideo_count                 *int
+	video_resolution               *string
+	video_duration_seconds         *int
+	addvideo_duration_seconds      *int
+	cache_ttl_overridden           *bool
+	created_at                     *time.Time
+	clearedFields                  map[string]struct{}
+	user                           *int64
+	cleareduser                    bool
+	api_key                        *int64
+	clearedapi_key                 bool
+	account                        *int64
+	clearedaccount                 bool
+	group                          *int64
+	clearedgroup                   bool
+	subscription                   *int64
+	clearedsubscription            bool
+	done                           bool
+	oldValue                       func(context.Context) (*UsageLog, error)
+	predicates                     []predicate.UsageLog
 }
 
 var _ ent.Mutation = (*UsageLogMutation)(nil)
@@ -44954,6 +51058,146 @@ func (m *UsageLogMutation) OldAccountID(ctx context.Context) (v int64, err error
 // ResetAccountID resets all changes to the "account_id" field.
 func (m *UsageLogMutation) ResetAccountID() {
 	m.account = nil
+}
+
+// SetAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field.
+func (m *UsageLogMutation) SetAccountUserQuotaCycleID(i int64) {
+	m.account_user_quota_cycle_id = &i
+	m.addaccount_user_quota_cycle_id = nil
+}
+
+// AccountUserQuotaCycleID returns the value of the "account_user_quota_cycle_id" field in the mutation.
+func (m *UsageLogMutation) AccountUserQuotaCycleID() (r int64, exists bool) {
+	v := m.account_user_quota_cycle_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccountUserQuotaCycleID returns the old "account_user_quota_cycle_id" field's value of the UsageLog entity.
+// If the UsageLog object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageLogMutation) OldAccountUserQuotaCycleID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccountUserQuotaCycleID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccountUserQuotaCycleID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccountUserQuotaCycleID: %w", err)
+	}
+	return oldValue.AccountUserQuotaCycleID, nil
+}
+
+// AddAccountUserQuotaCycleID adds i to the "account_user_quota_cycle_id" field.
+func (m *UsageLogMutation) AddAccountUserQuotaCycleID(i int64) {
+	if m.addaccount_user_quota_cycle_id != nil {
+		*m.addaccount_user_quota_cycle_id += i
+	} else {
+		m.addaccount_user_quota_cycle_id = &i
+	}
+}
+
+// AddedAccountUserQuotaCycleID returns the value that was added to the "account_user_quota_cycle_id" field in this mutation.
+func (m *UsageLogMutation) AddedAccountUserQuotaCycleID() (r int64, exists bool) {
+	v := m.addaccount_user_quota_cycle_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearAccountUserQuotaCycleID clears the value of the "account_user_quota_cycle_id" field.
+func (m *UsageLogMutation) ClearAccountUserQuotaCycleID() {
+	m.account_user_quota_cycle_id = nil
+	m.addaccount_user_quota_cycle_id = nil
+	m.clearedFields[usagelog.FieldAccountUserQuotaCycleID] = struct{}{}
+}
+
+// AccountUserQuotaCycleIDCleared returns if the "account_user_quota_cycle_id" field was cleared in this mutation.
+func (m *UsageLogMutation) AccountUserQuotaCycleIDCleared() bool {
+	_, ok := m.clearedFields[usagelog.FieldAccountUserQuotaCycleID]
+	return ok
+}
+
+// ResetAccountUserQuotaCycleID resets all changes to the "account_user_quota_cycle_id" field.
+func (m *UsageLogMutation) ResetAccountUserQuotaCycleID() {
+	m.account_user_quota_cycle_id = nil
+	m.addaccount_user_quota_cycle_id = nil
+	delete(m.clearedFields, usagelog.FieldAccountUserQuotaCycleID)
+}
+
+// SetOriginalGroupID sets the "original_group_id" field.
+func (m *UsageLogMutation) SetOriginalGroupID(i int64) {
+	m.original_group_id = &i
+	m.addoriginal_group_id = nil
+}
+
+// OriginalGroupID returns the value of the "original_group_id" field in the mutation.
+func (m *UsageLogMutation) OriginalGroupID() (r int64, exists bool) {
+	v := m.original_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOriginalGroupID returns the old "original_group_id" field's value of the UsageLog entity.
+// If the UsageLog object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UsageLogMutation) OldOriginalGroupID(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOriginalGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOriginalGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOriginalGroupID: %w", err)
+	}
+	return oldValue.OriginalGroupID, nil
+}
+
+// AddOriginalGroupID adds i to the "original_group_id" field.
+func (m *UsageLogMutation) AddOriginalGroupID(i int64) {
+	if m.addoriginal_group_id != nil {
+		*m.addoriginal_group_id += i
+	} else {
+		m.addoriginal_group_id = &i
+	}
+}
+
+// AddedOriginalGroupID returns the value that was added to the "original_group_id" field in this mutation.
+func (m *UsageLogMutation) AddedOriginalGroupID() (r int64, exists bool) {
+	v := m.addoriginal_group_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearOriginalGroupID clears the value of the "original_group_id" field.
+func (m *UsageLogMutation) ClearOriginalGroupID() {
+	m.original_group_id = nil
+	m.addoriginal_group_id = nil
+	m.clearedFields[usagelog.FieldOriginalGroupID] = struct{}{}
+}
+
+// OriginalGroupIDCleared returns if the "original_group_id" field was cleared in this mutation.
+func (m *UsageLogMutation) OriginalGroupIDCleared() bool {
+	_, ok := m.clearedFields[usagelog.FieldOriginalGroupID]
+	return ok
+}
+
+// ResetOriginalGroupID resets all changes to the "original_group_id" field.
+func (m *UsageLogMutation) ResetOriginalGroupID() {
+	m.original_group_id = nil
+	m.addoriginal_group_id = nil
+	delete(m.clearedFields, usagelog.FieldOriginalGroupID)
 }
 
 // SetRequestID sets the "request_id" field.
@@ -47420,7 +53664,7 @@ func (m *UsageLogMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UsageLogMutation) Fields() []string {
-	fields := make([]string, 0, 47)
+	fields := make([]string, 0, 49)
 	if m.user != nil {
 		fields = append(fields, usagelog.FieldUserID)
 	}
@@ -47429,6 +53673,12 @@ func (m *UsageLogMutation) Fields() []string {
 	}
 	if m.account != nil {
 		fields = append(fields, usagelog.FieldAccountID)
+	}
+	if m.account_user_quota_cycle_id != nil {
+		fields = append(fields, usagelog.FieldAccountUserQuotaCycleID)
+	}
+	if m.original_group_id != nil {
+		fields = append(fields, usagelog.FieldOriginalGroupID)
 	}
 	if m.request_id != nil {
 		fields = append(fields, usagelog.FieldRequestID)
@@ -47576,6 +53826,10 @@ func (m *UsageLogMutation) Field(name string) (ent.Value, bool) {
 		return m.APIKeyID()
 	case usagelog.FieldAccountID:
 		return m.AccountID()
+	case usagelog.FieldAccountUserQuotaCycleID:
+		return m.AccountUserQuotaCycleID()
+	case usagelog.FieldOriginalGroupID:
+		return m.OriginalGroupID()
 	case usagelog.FieldRequestID:
 		return m.RequestID()
 	case usagelog.FieldModel:
@@ -47679,6 +53933,10 @@ func (m *UsageLogMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldAPIKeyID(ctx)
 	case usagelog.FieldAccountID:
 		return m.OldAccountID(ctx)
+	case usagelog.FieldAccountUserQuotaCycleID:
+		return m.OldAccountUserQuotaCycleID(ctx)
+	case usagelog.FieldOriginalGroupID:
+		return m.OldOriginalGroupID(ctx)
 	case usagelog.FieldRequestID:
 		return m.OldRequestID(ctx)
 	case usagelog.FieldModel:
@@ -47796,6 +54054,20 @@ func (m *UsageLogMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAccountID(v)
+		return nil
+	case usagelog.FieldAccountUserQuotaCycleID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccountUserQuotaCycleID(v)
+		return nil
+	case usagelog.FieldOriginalGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOriginalGroupID(v)
 		return nil
 	case usagelog.FieldRequestID:
 		v, ok := value.(string)
@@ -48113,6 +54385,12 @@ func (m *UsageLogMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *UsageLogMutation) AddedFields() []string {
 	var fields []string
+	if m.addaccount_user_quota_cycle_id != nil {
+		fields = append(fields, usagelog.FieldAccountUserQuotaCycleID)
+	}
+	if m.addoriginal_group_id != nil {
+		fields = append(fields, usagelog.FieldOriginalGroupID)
+	}
 	if m.addchannel_id != nil {
 		fields = append(fields, usagelog.FieldChannelID)
 	}
@@ -48184,6 +54462,10 @@ func (m *UsageLogMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *UsageLogMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case usagelog.FieldAccountUserQuotaCycleID:
+		return m.AddedAccountUserQuotaCycleID()
+	case usagelog.FieldOriginalGroupID:
+		return m.AddedOriginalGroupID()
 	case usagelog.FieldChannelID:
 		return m.AddedChannelID()
 	case usagelog.FieldInputTokens:
@@ -48235,6 +54517,20 @@ func (m *UsageLogMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UsageLogMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case usagelog.FieldAccountUserQuotaCycleID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAccountUserQuotaCycleID(v)
+		return nil
+	case usagelog.FieldOriginalGroupID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOriginalGroupID(v)
+		return nil
 	case usagelog.FieldChannelID:
 		v, ok := value.(int64)
 		if !ok {
@@ -48390,6 +54686,12 @@ func (m *UsageLogMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *UsageLogMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(usagelog.FieldAccountUserQuotaCycleID) {
+		fields = append(fields, usagelog.FieldAccountUserQuotaCycleID)
+	}
+	if m.FieldCleared(usagelog.FieldOriginalGroupID) {
+		fields = append(fields, usagelog.FieldOriginalGroupID)
+	}
 	if m.FieldCleared(usagelog.FieldRequestedModel) {
 		fields = append(fields, usagelog.FieldRequestedModel)
 	}
@@ -48470,6 +54772,12 @@ func (m *UsageLogMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *UsageLogMutation) ClearField(name string) error {
 	switch name {
+	case usagelog.FieldAccountUserQuotaCycleID:
+		m.ClearAccountUserQuotaCycleID()
+		return nil
+	case usagelog.FieldOriginalGroupID:
+		m.ClearOriginalGroupID()
+		return nil
 	case usagelog.FieldRequestedModel:
 		m.ClearRequestedModel()
 		return nil
@@ -48552,6 +54860,12 @@ func (m *UsageLogMutation) ResetField(name string) error {
 		return nil
 	case usagelog.FieldAccountID:
 		m.ResetAccountID()
+		return nil
+	case usagelog.FieldAccountUserQuotaCycleID:
+		m.ResetAccountUserQuotaCycleID()
+		return nil
+	case usagelog.FieldOriginalGroupID:
+		m.ResetOriginalGroupID()
 		return nil
 	case usagelog.FieldRequestID:
 		m.ResetRequestID()

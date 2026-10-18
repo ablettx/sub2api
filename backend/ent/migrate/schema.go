@@ -259,6 +259,183 @@ var (
 			},
 		},
 	}
+	// AccountUserQuotaCyclesColumns holds the columns for the "account_user_quota_cycles" table.
+	AccountUserQuotaCyclesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "account_id", Type: field.TypeInt64},
+		{Name: "starts_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "resets_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "ready", Type: field.TypeBool, Default: false},
+		{Name: "version", Type: field.TypeInt64, Default: 1},
+		{Name: "account_stats_cost", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "numeric(20,8)"}},
+		{Name: "estimate", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "numeric(20,8)"}},
+		{Name: "estimate_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "estimate_source_cycle_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "observed_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "used_percent", Type: field.TypeFloat64, Nullable: true},
+		{Name: "missing_since", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "backfill_through_id", Type: field.TypeInt64, Default: 0},
+	}
+	// AccountUserQuotaCyclesTable holds the schema information for the "account_user_quota_cycles" table.
+	AccountUserQuotaCyclesTable = &schema.Table{
+		Name:       "account_user_quota_cycles",
+		Columns:    AccountUserQuotaCyclesColumns,
+		PrimaryKey: []*schema.Column{AccountUserQuotaCyclesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "accountuserquotacycle_account_id_resets_at",
+				Unique:  true,
+				Columns: []*schema.Column{AccountUserQuotaCyclesColumns[3], AccountUserQuotaCyclesColumns[5]},
+			},
+			{
+				Name:    "accountuserquotacycle_account_id_starts_at",
+				Unique:  false,
+				Columns: []*schema.Column{AccountUserQuotaCyclesColumns[3], AccountUserQuotaCyclesColumns[4]},
+			},
+		},
+	}
+	// AccountUserQuotaMembersColumns holds the columns for the "account_user_quota_members" table.
+	AccountUserQuotaMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "account_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "active", Type: field.TypeBool, Default: true},
+	}
+	// AccountUserQuotaMembersTable holds the schema information for the "account_user_quota_members" table.
+	AccountUserQuotaMembersTable = &schema.Table{
+		Name:       "account_user_quota_members",
+		Columns:    AccountUserQuotaMembersColumns,
+		PrimaryKey: []*schema.Column{AccountUserQuotaMembersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "accountuserquotamember_account_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{AccountUserQuotaMembersColumns[3], AccountUserQuotaMembersColumns[4]},
+			},
+			{
+				Name:    "accountuserquotamember_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{AccountUserQuotaMembersColumns[4]},
+			},
+		},
+	}
+	// AccountUserQuotaPoliciesColumns holds the columns for the "account_user_quota_policies" table.
+	AccountUserQuotaPoliciesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "account_id", Type: field.TypeInt64},
+		{Name: "upstream_account_id", Type: field.TypeString, Size: 200, Default: ""},
+		{Name: "enabled", Type: field.TypeBool, Default: false},
+		{Name: "enforced_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "config_version", Type: field.TypeInt64, Default: 1},
+		{Name: "fallback_group_ids", Type: field.TypeJSON},
+		{Name: "carryover_seconds", Type: field.TypeInt, Default: 1800},
+		{Name: "updated_by", Type: field.TypeInt64, Nullable: true},
+		{Name: "history_note", Type: field.TypeString, Size: 1000, Default: ""},
+		{Name: "history_verified_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+	}
+	// AccountUserQuotaPoliciesTable holds the schema information for the "account_user_quota_policies" table.
+	AccountUserQuotaPoliciesTable = &schema.Table{
+		Name:       "account_user_quota_policies",
+		Columns:    AccountUserQuotaPoliciesColumns,
+		PrimaryKey: []*schema.Column{AccountUserQuotaPoliciesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "accountuserquotapolicy_account_id",
+				Unique:  true,
+				Columns: []*schema.Column{AccountUserQuotaPoliciesColumns[3]},
+			},
+		},
+	}
+	// AccountUserQuotaReservationsColumns holds the columns for the "account_user_quota_reservations" table.
+	AccountUserQuotaReservationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "token", Type: field.TypeString, Size: 64},
+		{Name: "account_id", Type: field.TypeInt64},
+		{Name: "cycle_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "api_key_id", Type: field.TypeInt64},
+		{Name: "original_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "effective_group_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "subscription_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "request_id", Type: field.TypeString, Size: 128, Default: ""},
+		{Name: "pricing_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "config_version", Type: field.TypeInt64},
+		{Name: "reserved_cost", Type: field.TypeFloat64, SchemaType: map[string]string{"postgres": "numeric(20,8)"}},
+		{Name: "actual_cost", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "numeric(20,8)"}},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"reserved", "sent", "settled", "released", "uncertain"}, Default: "reserved"},
+		{Name: "lease_until", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "settled_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "billing_request_id", Type: field.TypeString, Nullable: true, Size: 128},
+		{Name: "calibration_run_id", Type: field.TypeString, Nullable: true, Size: 64},
+		{Name: "calibration_ordinal", Type: field.TypeInt, Nullable: true},
+		{Name: "calibration_max_requests", Type: field.TypeInt, Nullable: true},
+		{Name: "calibration_budget", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "numeric(20,8)"}},
+		{Name: "reconciliation_note", Type: field.TypeString, Size: 1000, Default: ""},
+	}
+	// AccountUserQuotaReservationsTable holds the schema information for the "account_user_quota_reservations" table.
+	AccountUserQuotaReservationsTable = &schema.Table{
+		Name:       "account_user_quota_reservations",
+		Columns:    AccountUserQuotaReservationsColumns,
+		PrimaryKey: []*schema.Column{AccountUserQuotaReservationsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "accountuserquotareservation_token",
+				Unique:  true,
+				Columns: []*schema.Column{AccountUserQuotaReservationsColumns[3]},
+			},
+			{
+				Name:    "accountuserquotareservation_calibration_run_id_calibration_ordinal",
+				Unique:  true,
+				Columns: []*schema.Column{AccountUserQuotaReservationsColumns[20], AccountUserQuotaReservationsColumns[21]},
+			},
+			{
+				Name:    "accountuserquotareservation_cycle_id_user_id_state",
+				Unique:  false,
+				Columns: []*schema.Column{AccountUserQuotaReservationsColumns[5], AccountUserQuotaReservationsColumns[6], AccountUserQuotaReservationsColumns[16]},
+			},
+			{
+				Name:    "accountuserquotareservation_account_id_lease_until",
+				Unique:  false,
+				Columns: []*schema.Column{AccountUserQuotaReservationsColumns[4], AccountUserQuotaReservationsColumns[17]},
+			},
+		},
+	}
+	// AccountUserQuotaUsageColumns holds the columns for the "account_user_quota_usage" table.
+	AccountUserQuotaUsageColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "cycle_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "actual_cost", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "numeric(20,8)"}},
+		{Name: "reserved_cost", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "numeric(20,8)"}},
+	}
+	// AccountUserQuotaUsageTable holds the schema information for the "account_user_quota_usage" table.
+	AccountUserQuotaUsageTable = &schema.Table{
+		Name:       "account_user_quota_usage",
+		Columns:    AccountUserQuotaUsageColumns,
+		PrimaryKey: []*schema.Column{AccountUserQuotaUsageColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "accountuserquotausage_cycle_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{AccountUserQuotaUsageColumns[3], AccountUserQuotaUsageColumns[4]},
+			},
+			{
+				Name:    "accountuserquotausage_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{AccountUserQuotaUsageColumns[4]},
+			},
+		},
+	}
 	// AnnouncementsColumns holds the columns for the "announcements" table.
 	AnnouncementsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -1638,6 +1815,8 @@ var (
 	// UsageLogsColumns holds the columns for the "usage_logs" table.
 	UsageLogsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "account_user_quota_cycle_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "original_group_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "request_id", Type: field.TypeString, Size: 64},
 		{Name: "model", Type: field.TypeString, Size: 100},
 		{Name: "requested_model", Type: field.TypeString, Nullable: true, Size: 100},
@@ -1694,31 +1873,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "usage_logs_api_keys_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[43]},
+				Columns:    []*schema.Column{UsageLogsColumns[45]},
 				RefColumns: []*schema.Column{APIKeysColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "usage_logs_accounts_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[44]},
+				Columns:    []*schema.Column{UsageLogsColumns[46]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "usage_logs_groups_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[45]},
+				Columns:    []*schema.Column{UsageLogsColumns[47]},
 				RefColumns: []*schema.Column{GroupsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "usage_logs_users_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[46]},
+				Columns:    []*schema.Column{UsageLogsColumns[48]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "usage_logs_user_subscriptions_usage_logs",
-				Columns:    []*schema.Column{UsageLogsColumns[47]},
+				Columns:    []*schema.Column{UsageLogsColumns[49]},
 				RefColumns: []*schema.Column{UserSubscriptionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -1727,62 +1906,62 @@ var (
 			{
 				Name:    "usagelog_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[46]},
+				Columns: []*schema.Column{UsageLogsColumns[48]},
 			},
 			{
 				Name:    "usagelog_api_key_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[43]},
+				Columns: []*schema.Column{UsageLogsColumns[45]},
 			},
 			{
 				Name:    "usagelog_account_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[44]},
+				Columns: []*schema.Column{UsageLogsColumns[46]},
 			},
 			{
 				Name:    "usagelog_group_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[45]},
+				Columns: []*schema.Column{UsageLogsColumns[47]},
 			},
 			{
 				Name:    "usagelog_subscription_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[47]},
+				Columns: []*schema.Column{UsageLogsColumns[49]},
 			},
 			{
 				Name:    "usagelog_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[42]},
+				Columns: []*schema.Column{UsageLogsColumns[44]},
 			},
 			{
 				Name:    "usagelog_model",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[2]},
+				Columns: []*schema.Column{UsageLogsColumns[4]},
 			},
 			{
 				Name:    "usagelog_requested_model",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[3]},
+				Columns: []*schema.Column{UsageLogsColumns[5]},
 			},
 			{
 				Name:    "usagelog_request_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[1]},
+				Columns: []*schema.Column{UsageLogsColumns[3]},
 			},
 			{
 				Name:    "usagelog_user_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[46], UsageLogsColumns[42]},
+				Columns: []*schema.Column{UsageLogsColumns[48], UsageLogsColumns[44]},
 			},
 			{
 				Name:    "usagelog_api_key_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[43], UsageLogsColumns[42]},
+				Columns: []*schema.Column{UsageLogsColumns[45], UsageLogsColumns[44]},
 			},
 			{
 				Name:    "usagelog_group_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsageLogsColumns[45], UsageLogsColumns[42]},
+				Columns: []*schema.Column{UsageLogsColumns[47], UsageLogsColumns[44]},
 			},
 		},
 	}
@@ -2093,6 +2272,11 @@ var (
 		APIKeysTable,
 		AccountsTable,
 		AccountGroupsTable,
+		AccountUserQuotaCyclesTable,
+		AccountUserQuotaMembersTable,
+		AccountUserQuotaPoliciesTable,
+		AccountUserQuotaReservationsTable,
+		AccountUserQuotaUsageTable,
 		AnnouncementsTable,
 		AnnouncementReadsTable,
 		AuthIdentitiesTable,
@@ -2147,6 +2331,21 @@ func init() {
 	AccountGroupsTable.ForeignKeys[1].RefTable = GroupsTable
 	AccountGroupsTable.Annotation = &entsql.Annotation{
 		Table: "account_groups",
+	}
+	AccountUserQuotaCyclesTable.Annotation = &entsql.Annotation{
+		Table: "account_user_quota_cycles",
+	}
+	AccountUserQuotaMembersTable.Annotation = &entsql.Annotation{
+		Table: "account_user_quota_members",
+	}
+	AccountUserQuotaPoliciesTable.Annotation = &entsql.Annotation{
+		Table: "account_user_quota_policies",
+	}
+	AccountUserQuotaReservationsTable.Annotation = &entsql.Annotation{
+		Table: "account_user_quota_reservations",
+	}
+	AccountUserQuotaUsageTable.Annotation = &entsql.Annotation{
+		Table: "account_user_quota_usage",
 	}
 	AnnouncementsTable.Annotation = &entsql.Annotation{
 		Table: "announcements",

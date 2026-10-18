@@ -58,6 +58,8 @@ type AccountHandler struct {
 	grokOAuthService        service.GrokOAuthTokenService
 	rateLimitService        *service.RateLimitService
 	accountUsageService     *service.AccountUsageService
+	accountUserQuota        *service.AccountUserQuotaService
+	quotaGateway            *service.OpenAIGatewayService
 	accountTestService      *service.AccountTestService
 	concurrencyService      *service.ConcurrencyService
 	crsSyncService          *service.CRSSyncService

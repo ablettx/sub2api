@@ -1,0 +1,19 @@
+{
+  "environment": "isolated local PostgreSQL/Redis, fake account and fake API key; simulated HTTPS GitHub Release assets",
+  "observed_versions": [
+    "0.2.17-ablett.1",
+    "0.2.17-ablett.2",
+    "0.2.17-ablett.1",
+    "0.2.17-ablett.2"
+  ],
+  "final_cycle_id": 1,
+  "final_actual_cost": "450.00000000",
+  "final_reserved_cost": "8.00000000",
+  "final_reservation_state": "uncertain",
+  "gateway_status_after_update_and_rollback": 429,
+  "gateway_error_type": "ACCOUNT_USER_QUOTA_EXHAUSTED",
+  "migration": "246_ablett_account_user_quota.sql",
+  "migration_checksum": "068c37473b3917a9d04f7491b6f00d3155e0fb3d8f2c54d6dbd6e8aa1ba9af2e",
+  "source_checksum_matches_database": true,
+  "fixture_commit_field_is_not_a_clean_release_commit": true
+}

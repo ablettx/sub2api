@@ -217,6 +217,20 @@ func (h *AsyncImageHandler) executeWithGateway(platform string, c *gin.Context) 
 		h.openAI.GrokImages(c)
 		return
 	}
+	if h.openAI.apiKeyService != nil {
+		original, ok := middleware2.GetAPIKeyFromContext(c)
+		if !ok {
+			imageTaskJSONError(c, http.StatusUnauthorized, "authentication_error", "Image task identity is unavailable")
+			return
+		}
+		key, subscription, err := h.openAI.gatewayService.RevalidateAccountUserQuotaIdentity(c.Request.Context(), c, original)
+		if err != nil {
+			imageTaskJSONError(c, http.StatusForbidden, "permission_error", "Image task authorization or billing eligibility changed")
+			return
+		}
+		c.Set(string(middleware2.ContextKeyAPIKey), key)
+		c.Set(string(middleware2.ContextKeySubscription), subscription)
+	}
 	h.openAI.Images(c)
 }
 

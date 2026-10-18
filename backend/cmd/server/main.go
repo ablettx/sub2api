@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"flag"
 	"log"
@@ -20,6 +21,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/handler"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
+	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/Wei-Shaw/sub2api/internal/setup"
 	"github.com/Wei-Shaw/sub2api/internal/web"
 
@@ -59,7 +61,14 @@ func main() {
 	// Parse command line flags
 	setupMode := flag.Bool("setup", false, "Run setup wizard in CLI mode")
 	showVersion := flag.Bool("version", false, "Show version information")
+	showMaintenance := flag.Bool("maintenance-info", false, "Show public Fork build and database compatibility metadata")
 	flag.Parse()
+	if *showMaintenance {
+		if err := json.NewEncoder(os.Stdout).Encode(service.MaintenanceBuildManifest(Version, Commit)); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 
 	if *showVersion {
 		log.Printf("Sub2API %s (commit: %s, built: %s)\n", Version, Commit, Date)
@@ -145,6 +154,7 @@ func runMainServer() {
 
 	buildInfo := handler.BuildInfo{
 		Version:   Version,
+		Commit:    Commit,
 		BuildType: BuildType,
 	}
 
@@ -184,7 +194,7 @@ func runMainServer() {
 
 	log.Println("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	if err := app.Server.Shutdown(ctx); err != nil {

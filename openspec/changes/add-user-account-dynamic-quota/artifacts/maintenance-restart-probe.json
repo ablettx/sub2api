@@ -1,0 +1,12 @@
+{
+  "environment": "isolated local binary deployment; simulated GitHub assets; no production traffic",
+  "running_fixture": "0.2.17-ablett.2",
+  "done": true,
+  "status": 503,
+  "elapsed_ms": 30106,
+  "body": {
+    "code": 503,
+    "message": "Requests are still settling; restart was canceled, retry after they complete",
+    "reason": "ACCOUNT_USER_QUOTA_UNAVAILABLE"
+  }
+}

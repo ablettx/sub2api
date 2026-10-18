@@ -35,6 +35,8 @@ func (UsageLog) Fields() []ent.Field {
 		field.Int64("user_id"),
 		field.Int64("api_key_id"),
 		field.Int64("account_id"),
+		field.Int64("account_user_quota_cycle_id").Optional().Nillable(),
+		field.Int64("original_group_id").Optional().Nillable(),
 		field.String("request_id").
 			MaxLen(64).
 			NotEmpty(),

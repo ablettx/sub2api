@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -42,6 +43,12 @@ type UsageBillingCommand struct {
 	APIKeyQuotaCost     float64
 	APIKeyRateLimitCost float64
 	AccountQuotaCost    float64
+	// Optional quota metadata is deliberately excluded from the legacy fingerprint.
+	AccountUserQuotaTracking      bool
+	AccountUserQuotaReservation   *AccountUserQuotaReservation
+	AccountUserActualCost         float64
+	AccountUserStatsCost          float64
+	AccountUserExecutionStartedAt time.Time
 }
 
 func (c *UsageBillingCommand) Normalize() {
@@ -86,6 +93,8 @@ func (c *UsageBillingCommand) quantizeMonetaryFields() {
 	c.APIKeyQuotaCost = QuantizeUsageBillingAmount(c.APIKeyQuotaCost)
 	c.APIKeyRateLimitCost = QuantizeUsageBillingAmount(c.APIKeyRateLimitCost)
 	c.AccountQuotaCost = QuantizeUsageBillingAmount(c.AccountQuotaCost)
+	c.AccountUserActualCost = QuantizeUsageBillingAmount(c.AccountUserActualCost)
+	c.AccountUserStatsCost = QuantizeUsageBillingAmount(c.AccountUserStatsCost)
 }
 
 // QuantizeUsageBillingAmount 把金额舍入到 UsageBillingMonetaryScale 位小数，
@@ -163,11 +172,12 @@ type AccountQuotaState struct {
 }
 
 type UsageBillingApplyResult struct {
-	Applied              bool
-	APIKeyQuotaExhausted bool
-	NewBalance           *float64           // post-deduction balance (nil = no balance deduction)
-	BalanceOverdrafted   bool               // true when the sufficient-balance guard missed and debt was still recorded
-	QuotaState           *AccountQuotaState // post-increment quota state (nil = no quota increment)
+	AccountUserQuotaCycleID *int64
+	Applied                 bool
+	APIKeyQuotaExhausted    bool
+	NewBalance              *float64           // post-deduction balance (nil = no balance deduction)
+	BalanceOverdrafted      bool               // true when the sufficient-balance guard missed and debt was still recorded
+	QuotaState              *AccountQuotaState // post-increment quota state (nil = no quota increment)
 }
 
 // BatchImageBalanceHoldCommand describes an idempotent balance hold operation.

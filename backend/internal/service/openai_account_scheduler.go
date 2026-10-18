@@ -2160,7 +2160,7 @@ func (s *OpenAIGatewayService) SelectAccountWithSchedulerForImages(
 // zeroing out capacity. The retry re-runs the exact same selection with the
 // quarantine checks bypassed, so healthy proxies always win the first pass
 // and quarantined ones only serve when nothing else can.
-func (s *OpenAIGatewayService) selectAccountWithScheduler(
+func (s *OpenAIGatewayService) selectAccountWithoutUserQuota(
 	ctx context.Context,
 	groupID *int64,
 	previousResponseID string,

@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-19",
+  "source_baseline": "b0a02a3304a0a78cdd003ddda1dd23ba02c03084",
+  "branch": "feat/user-account-dynamic-quota",
+  "worktree_uncommitted": true,
+  "production_verified": false,
+  "full_scenario_matrix_end_to_end": false,
+  "checks": [
+    {
+      "name": "backend_full_unit",
+      "command": "GOMAXPROCS=2 go test -p 2 -tags=unit ./...",
+      "exit_code": 0,
+      "log_sha256": "bc32093bc0ff04098562a16c4d971cdd215f781ad9822bd798f02881b23341ad",
+      "last_output": "?   \tgithub.com/Wei-Shaw/sub2api/internal/testutil\t[no test files]\n?   \tgithub.com/Wei-Shaw/sub2api/internal/util/httputil\t[no test files]\nok  \tgithub.com/Wei-Shaw/sub2api/internal/util/logredact\t(cached)\nok  \tgithub.com/Wei-Shaw/sub2api/internal/util/responseheaders\t(cached)\nok  \tgithub.com/Wei-Shaw/sub2api/internal/util/urlvalidator\t(cached)\nok  \tgithub.com/Wei-Shaw/sub2api/internal/web\t(cached)\nok  \tgithub.com/Wei-Shaw/sub2api/migrations\t(cached)\nok  \tgithub.com/Wei-Shaw/sub2api/pkg/pluginapi/v1\t(cached)"
+    },
+    {
+      "name": "quota_database",
+      "command": "GOMAXPROCS=2 go test -p 2 -tags=integration ./internal/repository -run '^TestAccountUserQuota' -count=1 -v",
+      "exit_code": 0,
+      "log_sha256": "14129180894b124334960a9fd2591d97390f596472b662dcc9d260172b9b0e4b",
+      "last_output": "=== RUN   TestAccountUserQuotaRepositoryUnknownAndLateBilling\n--- PASS: TestAccountUserQuotaRepositoryUnknownAndLateBilling (0.07s)\n=== RUN   TestAccountUserQuotaRepositoryCycleAndOutOfOrderObservation\n--- PASS: TestAccountUserQuotaRepositoryCycleAndOutOfOrderObservation (0.08s)\n=== RUN   TestAccountUserQuotaRepositoryConfirmedEarlyResetAndIdentity\n--- PASS: TestAccountUserQuotaRepositoryConfirmedEarlyResetAndIdentity (0.06s)\nPASS\nok  \tgithub.com/Wei-Shaw/sub2api/internal/repository\t9.688s"
+    },
+    {
+      "name": "quota_service_race",
+      "command": "GOMAXPROCS=2 go test -p 2 -race -tags=unit ./internal/service -run '^Test(AccountUserQuota|MaintenanceRelease)' -count=1",
+      "exit_code": 0,
+      "log_sha256": "18830ade18ee106b60740d8e5390783d0da9e8207f8dd5f545094d092e5a16c6",
+      "last_output": "ok  \tgithub.com/Wei-Shaw/sub2api/internal/service\t3.638s"
+    },
+    {
+      "name": "quota_async_race",
+      "command": "GOMAXPROCS=2 go test -p 2 -race -tags=unit ./internal/handler -run '^TestAccountUserQuotaAsync' -count=1 -v",
+      "exit_code": 0,
+      "log_sha256": "08e94aa52f9987d8ecc524360f50e781f487a46a8041adbcc27802bdbb847d1d",
+      "last_output": "=== RUN   TestAccountUserQuotaAsyncImageRechecksKeyAfterQueueing\n2026/10/19 02:46:26 [OpenAI WS Mode][openai_ws_mode=true] bootstrap enabled=false oauth_enabled=false apikey_enabled=false force_http=false responses_websockets_v2=false responses_websockets=false payload_log_sample_rate=0.000 event_flush_batch_size=0 event_flush_interval_ms=0 prewarm_cooldown_ms=0 retry_backoff_initial_ms=0 retry_backoff_max_ms=0 retry_jitter_ratio=0.000 retry_total_budget_ms=0 ws_read_limit_bytes=16777216\n--- PASS: TestAccountUserQuotaAsyncImageRechecksKeyAfterQueueing (0.00s)\nPASS\nok  \tgithub.com/Wei-Shaw/sub2api/internal/handler\t2.774s"
+    },
+    {
+      "name": "quota_admin",
+      "command": "GOMAXPROCS=2 go test -p 2 -tags=unit ./internal/handler/admin -run '^Test(ExecuteAdminIdempotent|AccountUserQuota)' -count=1 -v",
+      "exit_code": 0,
+      "log_sha256": "26128371c57407591a639eef07b000269b84e5f74607137c5cb696298da41ae3",
+      "last_output": "2026/10/19 02:48:57 [IdempotencyAudit] endpoint=/idempotent scope=admin.test.concurrent key_hash=b7f06468dced375ec726a327f16fd99199f28485fd5338aa0c882dcdada6f078 state_transition=processing->conflict replayed=false\n2026/10/19 02:48:58 [IdempotencyAudit] endpoint=/idempotent scope=admin.test.concurrent key_hash=b7f06468dced375ec726a327f16fd99199f28485fd5338aa0c882dcdada6f078 state_transition=processing->succeeded replayed=false\n2026/10/19 02:48:58 [IdempotencyMetric] name=idempotency_processing_duration_ms endpoint=/idempotent scope=admin.test.concurrent value=121.130\n2026/10/19 02:48:58 [IdempotencyMetric] name=idempotency_replay_total endpoint=/idempotent scope=admin.test.concurrent value=1\n2026/10/19 02:48:58 [IdempotencyAudit] endpoint=/idempotent scope=admin.test.concurrent key_hash=b7f06468dced375ec726a327f16fd99199f28485fd5338aa0c882dcdada6f078 state_transition=succeeded->replayed replayed=true\n--- PASS: TestExecuteAdminIdempotentJSONConcurrentRetryOnlyOneSideEffect (0.12s)\nPASS\nok  \tgithub.com/Wei-Shaw/sub2api/internal/handler/admin\t1.398s"
+    },
+    {
+      "name": "frontend_full",
+      "command": "pnpm exec vitest run --maxWorkers=2 --minWorkers=1",
+      "exit_code": 0,
+      "log_sha256": "958e3635ef59c94b21a73bc811f1b679e31a0b39921e184dde0e7a2f2bd49f85",
+      "last_output": " ✓ src/i18n/__tests__/wsModeLocaleDesc.spec.ts (1 test) 2ms\n ✓ src/views/admin/__tests__/GroupsView.compositePlatforms.spec.ts (1 test) 2ms\n\n Test Files  372 passed (372)\n      Tests  2873 passed (2873)\n   Start at  01:46:09\n   Duration  105.69s (transform 12.25s, setup 19.48s, collect 31.60s, tests 26.22s, environment 86.07s, prepare 13.13s)\n"
+    },
+    {
+      "name": "frontend_build",
+      "command": "pnpm build",
+      "exit_code": 0,
+      "log_sha256": "188bcdb0484533a5a5ac8e9723f516716ad3f317258298c37e439e59cb5e806b",
+      "last_output": "../backend/internal/web/dist/assets/index-CpAroHyY.js                                                           436.93 kB │ gzip: 133.18 kB\n../backend/internal/web/dist/assets/AccountsView-ZsuGZKvX.js                                                    847.44 kB │ gzip: 177.48 kB\n\n(!) Some chunks are larger than 500 kB after minification. Consider:\n- Using dynamic import() to code-split the application\n- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\n✓ built in 26.95s"
+    },
+    {
+      "name": "frontend_lint",
+      "command": "pnpm lint:check",
+      "exit_code": 0,
+      "log_sha256": "37c89fe83ddbec71c830360e7b197b350d9923de9dec11ae4c6bb371d56d70ba",
+      "last_output": "\n> sub2api-frontend@1.0.0 lint:check <repo>/frontend\n> eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts\n"
+    },
+    {
+      "name": "backend_default_ci_lint",
+      "command": "GOMAXPROCS=2 golangci-lint run --timeout=30m ./...",
+      "exit_code": 0,
+      "log_sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47",
+      "last_output": "0 issues."
+    },
+    {
+      "name": "frontend_final_affected_components",
+      "command": "pnpm exec vitest run src/components/account/__tests__/AccountUserQuotaPanel.spec.ts src/components/account/__tests__/AccountUsageCell.spec.ts src/components/account/__tests__/UsageProgressBar.spec.ts --maxWorkers=2 --minWorkers=1",
+      "exit_code": 0,
+      "test_files_passed": 3,
+      "tests_passed": 78,
+      "log_sha256": "f86d3942c107ffbf36e29ba5aac5d24e68470440c56f669738ad59d8043bf210"
+    },
+    {
+      "name": "openspec_strict",
+      "command": "openspec validate add-user-account-dynamic-quota --type change --strict --no-interactive",
+      "exit_code": 0
+    },
+    {
+      "name": "release_helper_and_installer",
+      "commands": [
+        "python -m unittest discover -s .github/release-tools -p test_release_matrix.py",
+        "python deploy/tests/install-maintenance-test.py",
+        "bash -n deploy/install.sh",
+        "bash -n .github/release-tools/release-images.sh"
+      ],
+      "exit_code": 0,
+      "helper_tests_passed": 10,
+      "installer_tests_passed": 4
+    }
+  ],
+  "optional_checks": [
+    {
+      "name": "all_backend_unit_tag_lint",
+      "exit_code": 1,
+      "issue_count": 72,
+      "all_reported_files_identical_to_HEAD": true,
+      "details": "optional-unit-lint-findings.json"
+    }
+  ],
+  "cleanup_completed": true
+}

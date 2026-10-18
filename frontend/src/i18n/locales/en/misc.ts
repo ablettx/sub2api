@@ -19,6 +19,8 @@ export default {
 
   // Version Badge
   version: {
+    releaseSource: 'Release source',
+    upstreamSource: 'Upstream source',
     currentVersion: 'Current Version',
     latestVersion: 'Latest Version',
     upToDate: "You're running the latest version.",

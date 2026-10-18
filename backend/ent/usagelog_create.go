@@ -45,6 +45,34 @@ func (_c *UsageLogCreate) SetAccountID(v int64) *UsageLogCreate {
 	return _c
 }
 
+// SetAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field.
+func (_c *UsageLogCreate) SetAccountUserQuotaCycleID(v int64) *UsageLogCreate {
+	_c.mutation.SetAccountUserQuotaCycleID(v)
+	return _c
+}
+
+// SetNillableAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field if the given value is not nil.
+func (_c *UsageLogCreate) SetNillableAccountUserQuotaCycleID(v *int64) *UsageLogCreate {
+	if v != nil {
+		_c.SetAccountUserQuotaCycleID(*v)
+	}
+	return _c
+}
+
+// SetOriginalGroupID sets the "original_group_id" field.
+func (_c *UsageLogCreate) SetOriginalGroupID(v int64) *UsageLogCreate {
+	_c.mutation.SetOriginalGroupID(v)
+	return _c
+}
+
+// SetNillableOriginalGroupID sets the "original_group_id" field if the given value is not nil.
+func (_c *UsageLogCreate) SetNillableOriginalGroupID(v *int64) *UsageLogCreate {
+	if v != nil {
+		_c.SetOriginalGroupID(*v)
+	}
+	return _c
+}
+
 // SetRequestID sets the "request_id" field.
 func (_c *UsageLogCreate) SetRequestID(v string) *UsageLogCreate {
 	_c.mutation.SetRequestID(v)
@@ -967,6 +995,14 @@ func (_c *UsageLogCreate) createSpec() (*UsageLog, *sqlgraph.CreateSpec) {
 		_spec = sqlgraph.NewCreateSpec(usagelog.Table, sqlgraph.NewFieldSpec(usagelog.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = _c.conflict
+	if value, ok := _c.mutation.AccountUserQuotaCycleID(); ok {
+		_spec.SetField(usagelog.FieldAccountUserQuotaCycleID, field.TypeInt64, value)
+		_node.AccountUserQuotaCycleID = &value
+	}
+	if value, ok := _c.mutation.OriginalGroupID(); ok {
+		_spec.SetField(usagelog.FieldOriginalGroupID, field.TypeInt64, value)
+		_node.OriginalGroupID = &value
+	}
 	if value, ok := _c.mutation.RequestID(); ok {
 		_spec.SetField(usagelog.FieldRequestID, field.TypeString, value)
 		_node.RequestID = value
@@ -1305,6 +1341,54 @@ func (u *UsageLogUpsert) SetAccountID(v int64) *UsageLogUpsert {
 // UpdateAccountID sets the "account_id" field to the value that was provided on create.
 func (u *UsageLogUpsert) UpdateAccountID() *UsageLogUpsert {
 	u.SetExcluded(usagelog.FieldAccountID)
+	return u
+}
+
+// SetAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsert) SetAccountUserQuotaCycleID(v int64) *UsageLogUpsert {
+	u.Set(usagelog.FieldAccountUserQuotaCycleID, v)
+	return u
+}
+
+// UpdateAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field to the value that was provided on create.
+func (u *UsageLogUpsert) UpdateAccountUserQuotaCycleID() *UsageLogUpsert {
+	u.SetExcluded(usagelog.FieldAccountUserQuotaCycleID)
+	return u
+}
+
+// AddAccountUserQuotaCycleID adds v to the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsert) AddAccountUserQuotaCycleID(v int64) *UsageLogUpsert {
+	u.Add(usagelog.FieldAccountUserQuotaCycleID, v)
+	return u
+}
+
+// ClearAccountUserQuotaCycleID clears the value of the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsert) ClearAccountUserQuotaCycleID() *UsageLogUpsert {
+	u.SetNull(usagelog.FieldAccountUserQuotaCycleID)
+	return u
+}
+
+// SetOriginalGroupID sets the "original_group_id" field.
+func (u *UsageLogUpsert) SetOriginalGroupID(v int64) *UsageLogUpsert {
+	u.Set(usagelog.FieldOriginalGroupID, v)
+	return u
+}
+
+// UpdateOriginalGroupID sets the "original_group_id" field to the value that was provided on create.
+func (u *UsageLogUpsert) UpdateOriginalGroupID() *UsageLogUpsert {
+	u.SetExcluded(usagelog.FieldOriginalGroupID)
+	return u
+}
+
+// AddOriginalGroupID adds v to the "original_group_id" field.
+func (u *UsageLogUpsert) AddOriginalGroupID(v int64) *UsageLogUpsert {
+	u.Add(usagelog.FieldOriginalGroupID, v)
+	return u
+}
+
+// ClearOriginalGroupID clears the value of the "original_group_id" field.
+func (u *UsageLogUpsert) ClearOriginalGroupID() *UsageLogUpsert {
+	u.SetNull(usagelog.FieldOriginalGroupID)
 	return u
 }
 
@@ -2166,6 +2250,62 @@ func (u *UsageLogUpsertOne) SetAccountID(v int64) *UsageLogUpsertOne {
 func (u *UsageLogUpsertOne) UpdateAccountID() *UsageLogUpsertOne {
 	return u.Update(func(s *UsageLogUpsert) {
 		s.UpdateAccountID()
+	})
+}
+
+// SetAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsertOne) SetAccountUserQuotaCycleID(v int64) *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.SetAccountUserQuotaCycleID(v)
+	})
+}
+
+// AddAccountUserQuotaCycleID adds v to the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsertOne) AddAccountUserQuotaCycleID(v int64) *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.AddAccountUserQuotaCycleID(v)
+	})
+}
+
+// UpdateAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field to the value that was provided on create.
+func (u *UsageLogUpsertOne) UpdateAccountUserQuotaCycleID() *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.UpdateAccountUserQuotaCycleID()
+	})
+}
+
+// ClearAccountUserQuotaCycleID clears the value of the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsertOne) ClearAccountUserQuotaCycleID() *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.ClearAccountUserQuotaCycleID()
+	})
+}
+
+// SetOriginalGroupID sets the "original_group_id" field.
+func (u *UsageLogUpsertOne) SetOriginalGroupID(v int64) *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.SetOriginalGroupID(v)
+	})
+}
+
+// AddOriginalGroupID adds v to the "original_group_id" field.
+func (u *UsageLogUpsertOne) AddOriginalGroupID(v int64) *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.AddOriginalGroupID(v)
+	})
+}
+
+// UpdateOriginalGroupID sets the "original_group_id" field to the value that was provided on create.
+func (u *UsageLogUpsertOne) UpdateOriginalGroupID() *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.UpdateOriginalGroupID()
+	})
+}
+
+// ClearOriginalGroupID clears the value of the "original_group_id" field.
+func (u *UsageLogUpsertOne) ClearOriginalGroupID() *UsageLogUpsertOne {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.ClearOriginalGroupID()
 	})
 }
 
@@ -3322,6 +3462,62 @@ func (u *UsageLogUpsertBulk) SetAccountID(v int64) *UsageLogUpsertBulk {
 func (u *UsageLogUpsertBulk) UpdateAccountID() *UsageLogUpsertBulk {
 	return u.Update(func(s *UsageLogUpsert) {
 		s.UpdateAccountID()
+	})
+}
+
+// SetAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsertBulk) SetAccountUserQuotaCycleID(v int64) *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.SetAccountUserQuotaCycleID(v)
+	})
+}
+
+// AddAccountUserQuotaCycleID adds v to the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsertBulk) AddAccountUserQuotaCycleID(v int64) *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.AddAccountUserQuotaCycleID(v)
+	})
+}
+
+// UpdateAccountUserQuotaCycleID sets the "account_user_quota_cycle_id" field to the value that was provided on create.
+func (u *UsageLogUpsertBulk) UpdateAccountUserQuotaCycleID() *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.UpdateAccountUserQuotaCycleID()
+	})
+}
+
+// ClearAccountUserQuotaCycleID clears the value of the "account_user_quota_cycle_id" field.
+func (u *UsageLogUpsertBulk) ClearAccountUserQuotaCycleID() *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.ClearAccountUserQuotaCycleID()
+	})
+}
+
+// SetOriginalGroupID sets the "original_group_id" field.
+func (u *UsageLogUpsertBulk) SetOriginalGroupID(v int64) *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.SetOriginalGroupID(v)
+	})
+}
+
+// AddOriginalGroupID adds v to the "original_group_id" field.
+func (u *UsageLogUpsertBulk) AddOriginalGroupID(v int64) *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.AddOriginalGroupID(v)
+	})
+}
+
+// UpdateOriginalGroupID sets the "original_group_id" field to the value that was provided on create.
+func (u *UsageLogUpsertBulk) UpdateOriginalGroupID() *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.UpdateOriginalGroupID()
+	})
+}
+
+// ClearOriginalGroupID clears the value of the "original_group_id" field.
+func (u *UsageLogUpsertBulk) ClearOriginalGroupID() *UsageLogUpsertBulk {
+	return u.Update(func(s *UsageLogUpsert) {
+		s.ClearOriginalGroupID()
 	})
 }
 

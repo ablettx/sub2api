@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tarfile
+import zipfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -30,26 +31,28 @@ class ReleaseMatrixTest(unittest.TestCase):
         for name in ('.goreleaser.yaml', '.goreleaser.simple.yaml'):
             shutil.copyfile(ROOT / name, name)
         Path('backend/cmd/server').mkdir(parents=True)
-        release.VERSION_FILE.write_text('9.8.7\n')
+        release.VERSION_FILE.write_text('9.8.7-ablett.1\n')
+        Path('backend/migrations').mkdir()
+        Path('backend/migrations/246_ablett_account_user_quota.sql').write_text('SELECT 1;')
 
     def fixture_artifacts(self, simple=False):
         directory = Path('release-input')
         directory.mkdir()
         for target in release.targets(simple):
-            name = release.archive_name('9.8.7', target)
+            name = release.archive_name('9.8.7-ablett.1', target)
             archive = directory / name
-            if target['goos'] == 'linux':
+            if target['goos'] != 'windows':
                 with tarfile.open(archive, 'w:gz') as out:
                     info = tarfile.TarInfo('sub2api')
                     info.size = 7
                     info.mode = 0o755
                     out.addfile(info, io.BytesIO(b'fixture'))
             else:
-                archive.write_bytes(b'fixture archive')
-            metadata = {'version': '9.8.7', 'sha': 'a' * 40, 'target': target,
-                        'archive': name, 'sha256': release.sha256(archive)}
+                with zipfile.ZipFile(archive, 'w') as zf:
+                    zf.writestr('sub2api.exe', b'fixture')
+            metadata = release.manifest_metadata('9.8.7-ablett.1', 'a' * 40, target, name, release.sha256(archive), release.binary_sha256(archive, target))
             (directory / f"manifest-{target['goos']}-{target['goarch']}.json").write_text(json.dumps(metadata))
-        return argparse.Namespace(input='release-input', version='9.8.7', sha='a' * 40, simple=simple, output='contexts')
+        return argparse.Namespace(input='release-input', version='9.8.7-ablett.1', sha='a' * 40, simple=simple, output='contexts')
 
     def test_full_and_simple_matrix_match_existing_targets(self):
         full = release.targets()
@@ -65,7 +68,8 @@ class ReleaseMatrixTest(unittest.TestCase):
         self.assertEqual(leaf['builds'][0]['goarch'], ['arm64'])
         self.assertEqual(leaf['builds'][0]['ignore'], [])
         self.assertEqual(leaf['archives'], original['archives'])
-        self.assertEqual(leaf['release'], original['release'])
+        self.assertFalse(leaf['release']['prerelease'])
+        self.assertEqual(leaf['release']['make_latest'], 'true')
         self.assertFalse(leaf['dockers'])
         self.assertIn('{{ .Env.RELEASE_DATE }}', '\n'.join(leaf['builds'][0]['ldflags']))
 
@@ -126,7 +130,7 @@ class ReleaseMatrixTest(unittest.TestCase):
         with patch.object(subprocess, 'check_output', return_value='a' * 40 + '\n'):
             with self.assertRaisesRegex(ValueError, 'version tag'):
                 release.plan(args)
-        args.ref = 'v9.8.7'
+        args.ref = 'v9.8.7-ablett.1'
         with patch.object(subprocess, 'check_output', side_effect=['a' * 40 + '\n', 'b' * 40 + '\n']):
             with self.assertRaisesRegex(ValueError, 'does not match'):
                 release.plan(args)
@@ -147,7 +151,7 @@ class ReleaseMatrixTest(unittest.TestCase):
         docker.chmod(0o755)
         env = {**os.environ, 'PATH': str(fake_bin.resolve()) + os.pathsep + os.environ['PATH'],
                'DOCKER_LOG': str(Path('docker.log').resolve()), 'RUNNER_TEMP': self.temp.name,
-               'RELEASE_VERSION': '9.8.7', 'RELEASE_SHA': 'a' * 40, 'GITHUB_REPOSITORY': 'ExampleOwner/sub2api',
+               'RELEASE_VERSION': '9.8.7-ablett.1', 'RELEASE_SHA': 'a' * 40, 'GITHUB_REPOSITORY': 'ExampleOwner/sub2api',
                'DRY_RUN': 'true', 'SIMPLE_RELEASE': 'false', 'DOCKERHUB_USERNAME': 'skip'}
         subprocess.run(['bash', str(ROOT / '.github/release-tools/release-images.sh')], env=env, check=True)
         log = Path('docker.log').read_text()
@@ -170,7 +174,7 @@ class ReleaseMatrixTest(unittest.TestCase):
                 log_path = Path(f'docker-{simple}.log').resolve()
                 env = {**os.environ, 'PATH': str(fake_bin.resolve()) + os.pathsep + os.environ['PATH'],
                        'DOCKER_LOG': str(log_path), 'RUNNER_TEMP': self.temp.name,
-                       'RELEASE_VERSION': '9.8.7', 'RELEASE_SHA': 'a' * 40, 'GITHUB_REPOSITORY': 'ExampleOwner/sub2api',
+                       'RELEASE_VERSION': '9.8.7-ablett.1', 'RELEASE_SHA': 'a' * 40, 'GITHUB_REPOSITORY': 'ExampleOwner/sub2api',
                        'DRY_RUN': 'false', 'SIMPLE_RELEASE': str(simple).lower(), 'DOCKERHUB_USERNAME': 'fixturehub'}
                 subprocess.run(['bash', str(ROOT / '.github/release-tools/release-images.sh')], env=env, check=True)
                 log = log_path.read_text()

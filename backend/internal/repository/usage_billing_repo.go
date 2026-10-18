@@ -47,11 +47,24 @@ func (r *usageBillingRepository) Apply(ctx context.Context, cmd *service.UsageBi
 		return nil, err
 	}
 	if !applied {
-		return &service.UsageBillingApplyResult{Applied: false}, nil
+		result := &service.UsageBillingApplyResult{Applied: false}
+		if cmd.AccountUserQuotaReservation != nil {
+			if err := finishDuplicateAccountUserQuotaBilling(ctx, tx, cmd, result); err != nil {
+				return nil, err
+			}
+			if err := tx.Commit(); err != nil {
+				return nil, err
+			}
+			tx = nil
+		}
+		return result, nil
 	}
 
 	result := &service.UsageBillingApplyResult{Applied: true}
 	if err := r.applyUsageBillingEffects(ctx, tx, cmd, result); err != nil {
+		return nil, err
+	}
+	if err := applyAccountUserQuotaBilling(ctx, tx, cmd, result); err != nil {
 		return nil, err
 	}
 

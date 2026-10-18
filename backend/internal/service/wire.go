@@ -11,6 +11,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/payment"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/antigravity"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/claude"
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
 	"github.com/google/wire"
@@ -31,6 +32,7 @@ func ProvideGrokOAuthService(proxyRepo ProxyRepository, oauthClient GrokOAuthCli
 type BuildInfo struct {
 	Version   string
 	BuildType string
+	Commit    string
 }
 
 // ProvidePricingService creates and initializes PricingService
@@ -44,8 +46,121 @@ func ProvidePricingService(cfg *config.Config, remoteClient PricingRemoteClient)
 }
 
 // ProvideUpdateService creates UpdateService with BuildInfo
-func ProvideUpdateService(cache UpdateCache, githubClient GitHubReleaseClient, buildInfo BuildInfo) *UpdateService {
-	return NewUpdateService(cache, githubClient, buildInfo.Version, buildInfo.BuildType)
+func ProvideUpdateService(cache UpdateCache, githubClient GitHubReleaseClient, buildInfo BuildInfo, sqlDB *sql.DB, quota *AccountUserQuotaService, usagePool *UsageRecordWorkerPool) *UpdateService {
+	svc := NewUpdateService(cache, githubClient, buildInfo.Version, buildInfo.BuildType)
+	svc.commit = buildInfo.Commit
+	if path, err := os.Executable(); err == nil {
+		svc.runningBinarySHA, err = fileSHA256(path)
+		if err != nil {
+			svc.runningBinarySHA = "unavailable"
+		}
+	}
+	svc.databaseState = func(ctx context.Context) (map[string]string, error) {
+		ctx, cancel := context.WithTimeout(ctx, AccountUserQuotaOperationTimeout)
+		defer cancel()
+		rows, err := sqlDB.QueryContext(ctx, `SELECT filename,checksum FROM schema_migrations ORDER BY filename`)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = rows.Close() }()
+		state := map[string]string{}
+		for rows.Next() {
+			var name, checksum string
+			if err := rows.Scan(&name, &checksum); err != nil {
+				return nil, err
+			}
+			state[name] = checksum
+		}
+		return state, rows.Err()
+	}
+	svc.prepareRestart = func(ctx context.Context) (err error) {
+		quota.admissionMu.Lock()
+		quota.draining = true
+		quota.admissionMu.Unlock()
+		defer func() {
+			if err != nil {
+				quota.admissionMu.Lock()
+				quota.draining = false
+				quota.admissionMu.Unlock()
+			}
+		}()
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+		canceled := func(cause error) error {
+			return infraerrors.ServiceUnavailable(AccountUserQuotaUnavailable,
+				"Requests are still settling; restart was canceled, retry after they complete").WithCause(cause)
+		}
+		ticker := time.NewTicker(250 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			var pending int
+			queryCtx, queryCancel := context.WithTimeout(ctx, AccountUserQuotaOperationTimeout)
+			err = sqlDB.QueryRowContext(queryCtx, `SELECT COUNT(*) FROM account_user_quota_reservations WHERE state IN ('reserved','sent') AND lease_until>NOW()`).Scan(&pending)
+			queryCancel()
+			if err != nil {
+				if ctx.Err() != nil {
+					return canceled(ctx.Err())
+				}
+				return infraerrors.ServiceUnavailable(AccountUserQuotaUnavailable,
+					"Cannot confirm pending account charges; restart was canceled").WithCause(err)
+			}
+			if usagePool != nil {
+				stats := usagePool.Stats()
+				pending += int(stats.RunningWorkers) + int(stats.WaitingTasks)
+			}
+			if pending == 0 {
+				return nil
+			}
+			select {
+			case <-ctx.Done():
+				return canceled(ctx.Err())
+			case <-ticker.C:
+			}
+		}
+	}
+	return svc
+}
+
+func ProvideAccountUserQuotaService(repo AccountUserQuotaRepository, cfg *config.Config) *AccountUserQuotaService {
+	return NewAccountUserQuotaService(repo, cfg)
+}
+
+// ProvideOpenAIGatewayService attaches account quota without changing constructors used by tests.
+func ProvideOpenAIGatewayService(
+	accountRepo AccountRepository,
+	usageLogRepo UsageLogRepository,
+	usageBillingRepo UsageBillingRepository,
+	userRepo UserRepository,
+	userSubRepo UserSubscriptionRepository,
+	userGroupRateRepo UserGroupRateRepository,
+	cache GatewayCache,
+	cfg *config.Config,
+	schedulerSnapshot *SchedulerSnapshotService,
+	concurrencyService *ConcurrencyService,
+	billingService *BillingService,
+	rateLimitService *RateLimitService,
+	billingCacheService *BillingCacheService,
+	httpUpstream HTTPUpstream,
+	deferredService *DeferredService,
+	openAITokenProvider *OpenAITokenProvider,
+	grokTokenProvider *GrokTokenProvider,
+	resolver *ModelPricingResolver,
+	channelService *ChannelService,
+	balanceNotifyService *BalanceNotifyService,
+	settingService *SettingService,
+	userPlatformQuotaRepo UserPlatformQuotaRepository,
+	quota *AccountUserQuotaService,
+	quotaGroups GroupRepository,
+	quotaKeys *APIKeyService,
+) *OpenAIGatewayService {
+	svc := NewOpenAIGatewayService(accountRepo, usageLogRepo, usageBillingRepo, userRepo, userSubRepo,
+		userGroupRateRepo, cache, cfg, schedulerSnapshot, concurrencyService, billingService,
+		rateLimitService, billingCacheService, httpUpstream, deferredService, openAITokenProvider,
+		grokTokenProvider, resolver, channelService, balanceNotifyService, settingService, userPlatformQuotaRepo)
+	svc.accountUserQuota = quota
+	svc.accountQuotaGroups = quotaGroups
+	svc.accountQuotaKeys = quotaKeys
+	return svc
 }
 
 // ProvideEmailQueueService creates EmailQueueService with default worker count
@@ -192,9 +307,11 @@ func ProvideOpenAIQuotaService(
 	privacyClientFactory PrivacyClientFactory,
 	referralClient OpenAIReferralClient,
 	openAIGatewayService *OpenAIGatewayService,
+	accountUserQuota *AccountUserQuotaService,
 ) *OpenAIQuotaService {
 	service := NewOpenAIQuotaService(accountRepo, proxyRepo, tokenProvider, privacyClientFactory, referralClient)
 	service.agentIdentityWS = openAIGatewayService
+	accountUserQuota.observer = service
 	return service
 }
 
@@ -234,6 +351,7 @@ func ProvideAccountUsageService(
 	identityCache IdentityCache,
 	tlsFPProfileService *TLSFingerprintProfileService,
 	openAIGatewayService *OpenAIGatewayService,
+	accountUserQuota *AccountUserQuotaService,
 ) *AccountUsageService {
 	service := NewAccountUsageService(
 		accountRepo,
@@ -249,6 +367,7 @@ func ProvideAccountUsageService(
 		tlsFPProfileService,
 	)
 	service.agentIdentityWS = openAIGatewayService
+	service.accountUserQuota = accountUserQuota
 	return service
 }
 
@@ -877,7 +996,8 @@ var ProviderSet = wire.NewSet(
 	NewAnnouncementService,
 	NewAdminService,
 	NewGatewayService,
-	NewOpenAIGatewayService,
+	ProvideOpenAIGatewayService,
+	ProvideAccountUserQuotaService,
 	ProvideImageStorageSettingService,
 	ProvideImageTaskService,
 	ProvideBatchImageModelPricingResolver,

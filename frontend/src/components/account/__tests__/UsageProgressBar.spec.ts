@@ -13,6 +13,12 @@ vi.mock('vue-i18n', async () => {
 })
 
 describe('UsageProgressBar', () => {
+  it.each([undefined, { requests: 0, tokens: 0, cost: 300 }])('历史日志缺失时仍展示后端有效估值', (windowStats) => {
+    const wrapper = mount(UsageProgressBar, { props: { label: '7d', color: 'emerald', utilization: 20, windowStats, estimatedTotalCost: 1500 } })
+    expect(wrapper.find('[data-test="estimated-total-cost"]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('0 req')
+    wrapper.unmount()
+  })
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-03-17T00:00:00Z'))

@@ -160,6 +160,8 @@
 
 Sub2API 是一个 AI API 网关平台，用于分发和管理 AI 产品订阅的 API 配额。用户通过平台生成的 API Key 调用上游 AI 服务，平台负责鉴权、计费、负载均衡和请求转发。
 
+`ablettx/sub2api` 维护版提供共享 OpenAI OAuth 账号的用户动态周期额度，支持实时均分、按实际扣费累计及授权账号回退。配置方式与后续 Fork 页面升级流程见[维护指南](docs/maintenance/user-account-quota.md)，当前本地验证及待发布事项见[验收记录](openspec/changes/add-user-account-dynamic-quota/verification.md)。
+
 ## 核心功能
 
 - **多账号管理** - 支持多种上游账号类型（OAuth、API Key）

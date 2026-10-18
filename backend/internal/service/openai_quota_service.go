@@ -358,6 +358,7 @@ func (s *OpenAIQuotaService) ResetCreditTargeted(ctx context.Context, accountID 
 }
 
 func (s *OpenAIQuotaService) resetCredit(ctx context.Context, accountID int64, creditID, redeemRequestID string, targeted bool) (*OpenAIQuotaResetResult, error) {
+	var previousSevenDayReset any
 	// Shadow guard: resetting credits via a shadow account would silently
 	// operate on the parent's quota; that is surprising and unwanted. Callers
 	// must reset the parent account directly.
@@ -374,6 +375,7 @@ func (s *OpenAIQuotaService) resetCredit(ctx context.Context, accountID int64, c
 		if acc.IsShadow() {
 			return nil, ErrSparkShadowResetNotSupported
 		}
+		previousSevenDayReset = acc.Extra["codex_7d_reset_at"]
 	}
 
 	accessToken, chatGPTAccountID, proxyURL, fedRAMP, err := s.prepareUpstreamCall(ctx, accountID)
@@ -435,6 +437,18 @@ func (s *OpenAIQuotaService) resetCredit(ctx context.Context, accountID int64, c
 		"code", payload.Code,
 		"windows_reset", payload.WindowsReset,
 	)
+	if payload.WindowsReset > 0 && previousSevenDayReset != nil && s.accountRepo != nil {
+		// The later usage observation must also confirm a changed seven-day window.
+		// A successful five-hour reset alone cannot clear the seven-day ledger.
+		if err := s.accountRepo.UpdateExtra(ctx, accountID, map[string]any{
+			"account_user_quota_confirmed_reset": map[string]any{
+				"previous_reset_at": previousSevenDayReset,
+				"confirmed_at":      time.Now().UTC().Truncate(time.Second).Format(time.RFC3339),
+			},
+		}); err != nil {
+			slog.Error("account quota reset confirmation persistence failed", "account_id", accountID, "error", err)
+		}
+	}
 	return &payload, nil
 }
 

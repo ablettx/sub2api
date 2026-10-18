@@ -20,6 +20,10 @@ const (
 	FieldAPIKeyID = "api_key_id"
 	// FieldAccountID holds the string denoting the account_id field in the database.
 	FieldAccountID = "account_id"
+	// FieldAccountUserQuotaCycleID holds the string denoting the account_user_quota_cycle_id field in the database.
+	FieldAccountUserQuotaCycleID = "account_user_quota_cycle_id"
+	// FieldOriginalGroupID holds the string denoting the original_group_id field in the database.
+	FieldOriginalGroupID = "original_group_id"
 	// FieldRequestID holds the string denoting the request_id field in the database.
 	FieldRequestID = "request_id"
 	// FieldModel holds the string denoting the model field in the database.
@@ -163,6 +167,8 @@ var Columns = []string{
 	FieldUserID,
 	FieldAPIKeyID,
 	FieldAccountID,
+	FieldAccountUserQuotaCycleID,
+	FieldOriginalGroupID,
 	FieldRequestID,
 	FieldModel,
 	FieldRequestedModel,
@@ -313,6 +319,16 @@ func ByAPIKeyID(opts ...sql.OrderTermOption) OrderOption {
 // ByAccountID orders the results by the account_id field.
 func ByAccountID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAccountID, opts...).ToFunc()
+}
+
+// ByAccountUserQuotaCycleID orders the results by the account_user_quota_cycle_id field.
+func ByAccountUserQuotaCycleID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAccountUserQuotaCycleID, opts...).ToFunc()
+}
+
+// ByOriginalGroupID orders the results by the original_group_id field.
+func ByOriginalGroupID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOriginalGroupID, opts...).ToFunc()
 }
 
 // ByRequestID orders the results by the request_id field.

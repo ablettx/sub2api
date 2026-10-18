@@ -12,6 +12,8 @@ export interface ReleaseInfo {
 }
 
 export interface VersionInfo {
+  restart_required?: boolean
+  source?: { repository: string; channel: string; upstream_repository: string; image: string }
   current_version: string
   latest_version: string
   has_update: boolean
