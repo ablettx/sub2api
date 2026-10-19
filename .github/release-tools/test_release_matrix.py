@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 import yaml
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(os.environ.get('GITHUB_WORKSPACE', Path(__file__).resolve().parents[2]))
 spec = importlib.util.spec_from_file_location('release_matrix', Path(__file__).with_name('release_matrix.py'))
 release = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(release)
@@ -142,6 +142,58 @@ class ReleaseMatrixTest(unittest.TestCase):
         self.assertEqual(output['dry_run'], 'true')
         self.assertEqual(output['owner_lower'], 'exampleowner')
         self.assertEqual(len(json.loads(output['matrix'])['include']), 5)
+
+    def version_sync_fixture(self):
+        def git(*args):
+            return subprocess.check_output(['git', *args], text=True, stderr=subprocess.STDOUT).strip()
+        git('init', '-b', 'main')
+        git('config', 'user.name', 'Release test')
+        git('config', 'user.email', 'release-test@example.com')
+        git('config', 'commit.gpgsign', 'false')
+        git('add', str(release.VERSION_FILE))
+        git('commit', '-m', 'initial version')
+        git('init', '--bare', 'origin.git')
+        git('remote', 'add', 'origin', str(Path('origin.git').resolve()))
+        git('push', 'origin', 'main')
+        return git
+
+    def run_version_sync(self, sha):
+        return subprocess.run(['bash', str(Path(__file__).with_name('sync-version.sh'))],
+                              env=dict(os.environ, RELEASE_VERSION='9.8.8-ablett.1', RELEASE_SHA=sha,
+                                       RELEASE_DEFAULT_BRANCH='main'),
+                              text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    def test_version_sync_keeps_unmerged_default_branch_unchanged(self):
+        git = self.version_sync_fixture()
+        main_sha = git('rev-parse', 'HEAD')
+        git('switch', '-c', 'maintenance')
+        Path('maintenance-only').write_text('quota feature')
+        git('add', 'maintenance-only')
+        git('commit', '-m', 'maintenance feature')
+        source_sha = git('rev-parse', 'HEAD')
+        git('switch', 'main')
+        result = self.run_version_sync(source_sha)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('keeping its VERSION unchanged', result.stdout)
+        self.assertEqual(release.VERSION_FILE.read_text(), '9.8.7-ablett.1\n')
+        self.assertEqual(git('rev-parse', 'HEAD'), main_sha)
+        self.assertEqual(git('--git-dir=origin.git', 'rev-parse', 'main'), main_sha)
+
+    def test_version_sync_updates_default_branch_containing_release(self):
+        git = self.version_sync_fixture()
+        result = self.run_version_sync(git('rev-parse', 'HEAD'))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(release.VERSION_FILE.read_text(), '9.8.8-ablett.1\n')
+        self.assertEqual(git('--git-dir=origin.git', 'show', 'main:backend/cmd/server/VERSION'), '9.8.8-ablett.1')
+
+    def test_version_sync_rejects_unknown_source_without_changing_version(self):
+        git = self.version_sync_fixture()
+        main_sha = git('rev-parse', 'HEAD')
+        result = self.run_version_sync('a' * 40)
+        self.assertNotEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(release.VERSION_FILE.read_text(), '9.8.7-ablett.1\n')
+        self.assertEqual(git('rev-parse', 'HEAD'), main_sha)
+        self.assertEqual(git('--git-dir=origin.git', 'rev-parse', 'main'), main_sha)
 
     def test_docker_commands_do_not_publish_during_dry_run(self):
         fake_bin = Path('bin')

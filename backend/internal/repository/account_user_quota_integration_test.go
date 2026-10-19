@@ -17,15 +17,17 @@ import (
 )
 
 type quotaFixture struct {
-	t       *testing.T
-	ctx     context.Context
-	now     time.Time
-	reset   time.Time
-	account *service.Account
-	users   []*service.User
-	keys    []*service.APIKey
-	repo    service.AccountUserQuotaRepository
-	billing service.UsageBillingRepository
+	t          *testing.T
+	ctx        context.Context
+	now        time.Time
+	reset      time.Time
+	account    *service.Account
+	users      []*service.User
+	keys       []*service.APIKey
+	repo       service.AccountUserQuotaRepository
+	billing    service.UsageBillingRepository
+	accountIDs []int64
+	groupIDs   []int64
 }
 
 func TestAccountUserQuotaRepositoryArchivedReceiptsAndMirroredLogs(t *testing.T) {
@@ -103,8 +105,10 @@ func TestAccountUserQuotaRepositoryMigrationsAndRestartContinuity(t *testing.T) 
 	require.NoError(t, applyMigrationsFS(f.ctx, integrationDB, fsys))
 	require.NoError(t, applyMigrationsFS(f.ctx, integrationDB, fsys))
 	t.Cleanup(func() {
-		_, _ = integrationDB.ExecContext(context.Background(), `DELETE FROM schema_migrations WHERE filename='246_upstream_quota_upgrade_fixture.sql'`)
-		_, _ = integrationDB.ExecContext(context.Background(), `DROP TABLE IF EXISTS ablett_upgrade_test_marker`)
+		_, err := integrationDB.ExecContext(context.Background(), `DELETE FROM schema_migrations WHERE filename='246_upstream_quota_upgrade_fixture.sql'`)
+		require.NoError(t, err)
+		_, err = integrationDB.ExecContext(context.Background(), `DROP TABLE IF EXISTS ablett_upgrade_test_marker`)
+		require.NoError(t, err)
 	})
 	restarted := NewAccountUserQuotaRepository(testEntClient(t), integrationDB)
 	after, err := restarted.Get(f.ctx, f.account.ID, f.now)
@@ -137,7 +141,7 @@ func TestAccountUserQuotaRepositoryMultipleKeysAccountsAndDisabledMembers(t *tes
 	state, err = f.repo.Get(f.ctx, f.account.ID, f.now)
 	require.NoError(t, err)
 	require.Equal(t, 350.0, state.Members[0].ActualCost)
-	other := mustCreateAccount(t, testEntClient(t), &service.Account{Name: "other-quota-" + uuid.NewString(), Platform: service.PlatformOpenAI, Credentials: map[string]any{"chatgpt_account_id": uuid.NewString()}, Extra: f.account.Extra})
+	other := f.createAccount(&service.Account{Name: "other-quota-" + uuid.NewString(), Platform: service.PlatformOpenAI, Credentials: map[string]any{"chatgpt_account_id": uuid.NewString()}, Extra: f.account.Extra})
 	cmd = f.command(0, 40, 30, nil)
 	cmd.AccountID = other.ID
 	_, err = f.billing.Apply(f.ctx, cmd)
@@ -229,11 +233,12 @@ func TestAccountUserQuotaRepositoryDisabledPolicyStillTracksActualCharges(t *tes
 func newQuotaFixture(t *testing.T) *quotaFixture {
 	t.Helper()
 	f := &quotaFixture{t: t, ctx: context.Background(), now: time.Now().UTC().Truncate(time.Second)}
+	t.Cleanup(func() { require.NoError(t, f.cleanup(), "clean quota fixture") })
 	f.reset = f.now.Add(6 * 24 * time.Hour)
 	client := testEntClient(t)
 	f.repo = NewAccountUserQuotaRepository(client, integrationDB)
 	f.billing = NewUsageBillingRepository(client, integrationDB)
-	f.account = mustCreateAccount(t, client, &service.Account{Name: "quota-" + uuid.NewString(), Platform: service.PlatformOpenAI,
+	f.account = f.createAccount(&service.Account{Name: "quota-" + uuid.NewString(), Platform: service.PlatformOpenAI,
 		Credentials: map[string]any{"chatgpt_account_id": uuid.NewString()}, Extra: map[string]any{
 			"codex_7d_reset_at": f.reset.Format(time.RFC3339), "codex_7d_used_percent": 20.0, "codex_usage_updated_at": f.now.Format(time.RFC3339)}})
 	for range 4 {
@@ -444,7 +449,7 @@ func TestAccountUserQuotaRepositoryConfirmedEarlyResetAndIdentity(t *testing.T) 
 	require.Equal(t, newID, s.Cycle.ID)
 	_, err = integrationDB.ExecContext(f.ctx, `UPDATE accounts SET credentials=jsonb_set(credentials,'{chatgpt_account_id}',to_jsonb($2::text)) WHERE id=$1`, f.account.ID, uuid.NewString())
 	require.Error(t, err)
-	alias := mustCreateAccount(t, testEntClient(t), &service.Account{Name: "alias-" + uuid.NewString(), Platform: service.PlatformOpenAI, Credentials: f.account.Credentials})
+	alias := f.createAccount(&service.Account{Name: "alias-" + uuid.NewString(), Platform: service.PlatformOpenAI, Credentials: f.account.Credentials})
 	_, err = f.repo.Get(f.ctx, alias.ID, f.now)
 	require.Error(t, err, "duplicate account row cannot bypass quota")
 }

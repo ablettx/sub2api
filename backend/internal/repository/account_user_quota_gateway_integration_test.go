@@ -42,7 +42,7 @@ func TestAccountUserQuotaGatewayHTTPForwardAndActualBilling(t *testing.T) {
 			f := newQuotaFixture(t)
 			f.ready(450, 300)
 			client := testEntClient(t)
-			group := mustCreateGroup(t, client, &service.Group{Name: "quota-gateway-" + uuid.NewString(), Platform: service.PlatformOpenAI, RateMultiplier: 2, AllowImageGeneration: true})
+			group := f.createGroup(&service.Group{Name: "quota-gateway-" + uuid.NewString(), Platform: service.PlatformOpenAI, RateMultiplier: 2, AllowImageGeneration: true})
 			require.NoError(t, client.Group.UpdateOneID(group.ID).SetAllowImageGeneration(true).Exec(f.ctx))
 			mustBindAccountToGroup(t, client, f.account.ID, group.ID, 0)
 			_, err := integrationDB.ExecContext(f.ctx, `UPDATE api_keys SET group_id=$2 WHERE id=$1`, f.keys[0].ID, group.ID)
@@ -163,9 +163,9 @@ func TestAccountUserQuotaGatewayAuthorizedSubscriptionFallback(t *testing.T) {
 	f := newQuotaFixture(t)
 	state := f.ready(450, 300)
 	client := testEntClient(t)
-	original := mustCreateGroup(t, client, &service.Group{Name: "quota-original-" + uuid.NewString(), Platform: service.PlatformOpenAI, RateMultiplier: 1})
-	targetGroup := mustCreateGroup(t, client, &service.Group{Name: "quota-target-" + uuid.NewString(), Platform: service.PlatformOpenAI, RateMultiplier: 3, SubscriptionType: service.SubscriptionTypeSubscription})
-	fallback := mustCreateAccount(t, client, &service.Account{Name: "quota-fallback-" + uuid.NewString(), Platform: service.PlatformOpenAI, Credentials: map[string]any{"chatgpt_account_id": uuid.NewString(), "access_token": "isolated-test-token"}, Extra: f.account.Extra})
+	original := f.createGroup(&service.Group{Name: "quota-original-" + uuid.NewString(), Platform: service.PlatformOpenAI, RateMultiplier: 1})
+	targetGroup := f.createGroup(&service.Group{Name: "quota-target-" + uuid.NewString(), Platform: service.PlatformOpenAI, RateMultiplier: 3, SubscriptionType: service.SubscriptionTypeSubscription})
+	fallback := f.createAccount(&service.Account{Name: "quota-fallback-" + uuid.NewString(), Platform: service.PlatformOpenAI, Credentials: map[string]any{"chatgpt_account_id": uuid.NewString(), "access_token": "isolated-test-token"}, Extra: f.account.Extra})
 	mustBindAccountToGroup(t, client, f.account.ID, original.ID, 0)
 	mustBindAccountToGroup(t, client, fallback.ID, targetGroup.ID, 0)
 	_, err := integrationDB.ExecContext(f.ctx, `UPDATE api_keys SET group_id=$2 WHERE id=$1`, f.keys[0].ID, original.ID)
@@ -273,7 +273,7 @@ func TestAccountUserQuotaGatewayAuthorizedSubscriptionFallback(t *testing.T) {
 	var quotaErr *service.AccountUserQuotaError
 	require.ErrorAs(t, err, &quotaErr)
 	require.Equal(t, service.AccountUserQuotaUnmetered, quotaErr.Code)
-	uncontrolled := mustCreateAccount(t, client, &service.Account{Name: "quota-live-uncontrolled-" + uuid.NewString(), Platform: service.PlatformOpenAI,
+	uncontrolled := f.createAccount(&service.Account{Name: "quota-live-uncontrolled-" + uuid.NewString(), Platform: service.PlatformOpenAI,
 		Credentials: map[string]any{"chatgpt_account_id": uuid.NewString()}})
 	mustBindAccountToGroup(t, client, uncontrolled.ID, original.ID, 0)
 	liveSelection, _, err := gateway.SelectAccountWithSchedulerForCapability(newContext(), &original.ID, "", "", "gpt-5.1", nil,

@@ -197,4 +197,21 @@ S01～S43 按需求规格中 Scenario 的顺序一一编号，不增加或改写
 
 隔离容器、匿名数据卷、网络、模拟代理和浏览器 TaskSpace 均已清理，本地测试端口已关闭，Docker Desktop 恢复为任务开始前的关闭状态。
 
-本地验收阶段未执行暂存、提交、推送、标签发布、远程 Actions、真实 Fork Release、生产数据库写入、部署、重启或真实付费校准。后续已获当前维护分支提交与推送授权，普通分支推送可能自动触发常规 CI；发布流程与生产操作仍未授权。V24～V26 仅在分别取得相应授权后执行；此处不申请或推定这些操作已经获准。
+首轮本地验收阶段未执行暂存、提交、推送、标签发布、远程 Actions、真实 Fork Release、生产数据库写入、部署、重启或真实付费校准。这是该阶段的历史快照；后续提交、Actions 与 Release 状态以实际记录为准，生产部署须另行确认。
+
+## 发布前集成测试复验（2026-10-19）
+
+提交 `499408c1fc9354cfeec3aaf595d690ea59045001` 的 [GitHub CI](https://github.com/ablettx/sub2api/actions/runs/39157300742) 在完整集成测试中失败。配额测试使用共享连接提交真实事务，但未清理测试创建的账本、用户和调用日志；账本外键阻止旧测试删除用户，而旧测试忽略了清理错误，导致后续统计及用户、订阅测试受到残留数据影响。局部配额测试通过不能代表完整集成测试通过。
+
+修复仅清理测试夹具登记的账号、用户、分组及其关联数据，按依赖顺序在一个事务内完成，并处理删除 Key 时产生的鉴权失效消息；生产迁移及账本保护规则不变。新增真实数据库回归同时验证本夹具数据消失、其他夹具的分组与已扣费账本保留，旧测试清理失败时立即报错。
+
+| 验证 | 结果 |
+| --- | --- |
+| 修复前同次运行配额、仪表盘、用户及订阅测试 | 复现四个测试套件失败，与远程 CI 现象一致 |
+| 修复后同一组合，`GOMAXPROCS=2 CI=1 go test -p 2 -tags=integration ./internal/repository -run 'TestAccountUserQuota\|TestUsageLogRepoSuite\|TestUserRepoAPIKeyGroupFilterSuite\|TestUserRepoSuite\|TestUserSubscriptionRepoSuite' -count=1 -timeout=10m` | 退出 0，包含新增夹具隔离回归 |
+| `GOMAXPROCS=2 GOFLAGS='-p=2' CI=1 make test-integration`，工作目录 `backend` | 全部通过，真实 PostgreSQL 18.1 与 Redis 8.4；`CI=1` 防止 Docker 不可用时跳过集成测试 |
+| 发布 helper，Python 3.14.4 隔离环境与既有锁定依赖 | 13 项通过；另按远程工作流把工具复制至临时目录，设置 `GITHUB_WORKSPACE` 后复验通过 |
+| `python deploy/tests/install-maintenance-test.py` | 4 项通过 |
+| `bash -n .github/release-tools/sync-version.sh`、`git diff --check` | 通过 |
+
+发布准备同时修正版本文件同步边界：维护版提交未被默认分支包含时，不回写默认分支的 `VERSION`；默认分支包含发布提交时才允许同步，提交不存在时立即失败。三个本地 Git 仓库回归覆盖跳过、合法同步与非法来源。此处记录本地结果；远程完整 CI、发布演练、正式制品与生产验收分别留证，不将本地通过写成生产完成。
