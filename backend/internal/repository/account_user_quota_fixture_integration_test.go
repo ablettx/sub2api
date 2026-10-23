@@ -16,14 +16,14 @@ import (
 
 func (f *quotaFixture) createAccount(account *service.Account) *service.Account {
 	f.t.Helper()
-	account = mustCreateAccount(f.t, testEntClient(f.t), account)
+	account = mustCreateAccount(f.t, f.client, account)
 	f.accountIDs = append(f.accountIDs, account.ID)
 	return account
 }
 
 func (f *quotaFixture) createGroup(group *service.Group) *service.Group {
 	f.t.Helper()
-	group = mustCreateGroup(f.t, testEntClient(f.t), group)
+	group = mustCreateGroup(f.t, f.client, group)
 	f.groupIDs = append(f.groupIDs, group.ID)
 	return group
 }
@@ -34,7 +34,7 @@ func (f *quotaFixture) createGroup(group *service.Group) *service.Group {
 func (f *quotaFixture) cleanup() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	tx, err := integrationDB.BeginTx(ctx, nil)
+	tx, err := f.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -56,6 +56,8 @@ func (f *quotaFixture) cleanup() error {
 		{`DELETE FROM usage_logs WHERE account_id = ANY($1)`, f.accountIDs},
 		{`DELETE FROM usage_billing_dedup WHERE account_id = ANY($1)`, f.accountIDs},
 		{`DELETE FROM usage_billing_dedup_archive WHERE account_id = ANY($1)`, f.accountIDs},
+		{`DELETE FROM usage_billing_dedup WHERE api_key_id IN (SELECT id FROM api_keys WHERE user_id = ANY($1))`, userIDs},
+		{`DELETE FROM usage_billing_dedup_archive WHERE api_key_id IN (SELECT id FROM api_keys WHERE user_id = ANY($1))`, userIDs},
 		{`DELETE FROM account_user_quota_reservations WHERE account_id = ANY($1)`, f.accountIDs},
 		{`DELETE FROM account_user_quota_usage WHERE cycle_id IN (SELECT id FROM account_user_quota_cycles WHERE account_id = ANY($1))`, f.accountIDs},
 		{`DELETE FROM account_user_quota_members WHERE account_id = ANY($1)`, f.accountIDs},

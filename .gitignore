@@ -145,6 +145,7 @@ docs/*
 !docs/maintenance/
 docs/maintenance/*
 !docs/maintenance/user-account-quota.md
+!docs/maintenance/upstream-v0.2.18.md
 !docs/legal/
 !docs/legal/*.md
 !docs/screenshots/

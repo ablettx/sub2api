@@ -4,12 +4,14 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"sync"
 	"testing"
 	"testing/fstest"
 	"time"
 
+	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/Wei-Shaw/sub2api/migrations"
 	"github.com/google/uuid"
@@ -28,6 +30,8 @@ type quotaFixture struct {
 	billing    service.UsageBillingRepository
 	accountIDs []int64
 	groupIDs   []int64
+	db         *sql.DB
+	client     *dbent.Client
 }
 
 func TestAccountUserQuotaRepositoryArchivedReceiptsAndMirroredLogs(t *testing.T) {
@@ -232,12 +236,16 @@ func TestAccountUserQuotaRepositoryDisabledPolicyStillTracksActualCharges(t *tes
 
 func newQuotaFixture(t *testing.T) *quotaFixture {
 	t.Helper()
-	f := &quotaFixture{t: t, ctx: context.Background(), now: time.Now().UTC().Truncate(time.Second)}
+	return newQuotaFixtureForDatabase(t, integrationDB, testEntClient(t))
+}
+
+func newQuotaFixtureForDatabase(t *testing.T, db *sql.DB, client *dbent.Client) *quotaFixture {
+	t.Helper()
+	f := &quotaFixture{t: t, ctx: context.Background(), now: time.Now().UTC().Truncate(time.Second), db: db, client: client}
 	t.Cleanup(func() { require.NoError(t, f.cleanup(), "clean quota fixture") })
 	f.reset = f.now.Add(6 * 24 * time.Hour)
-	client := testEntClient(t)
-	f.repo = NewAccountUserQuotaRepository(client, integrationDB)
-	f.billing = NewUsageBillingRepository(client, integrationDB)
+	f.repo = NewAccountUserQuotaRepository(client, db)
+	f.billing = NewUsageBillingRepository(client, db)
 	f.account = f.createAccount(&service.Account{Name: "quota-" + uuid.NewString(), Platform: service.PlatformOpenAI,
 		Credentials: map[string]any{"chatgpt_account_id": uuid.NewString()}, Extra: map[string]any{
 			"codex_7d_reset_at": f.reset.Format(time.RFC3339), "codex_7d_used_percent": 20.0, "codex_usage_updated_at": f.now.Format(time.RFC3339)}})
@@ -284,7 +292,7 @@ func (f *quotaFixture) observe(percent float64, observed, reset time.Time) *serv
 	extra := map[string]any{"codex_7d_reset_at": reset.Format(time.RFC3339), "codex_7d_used_percent": percent, "codex_usage_updated_at": observed.Format(time.RFC3339)}
 	b, err := json.Marshal(extra)
 	require.NoError(f.t, err)
-	_, err = integrationDB.ExecContext(f.ctx, `UPDATE accounts SET extra=extra || $2::jsonb WHERE id=$1`, f.account.ID, string(b))
+	_, err = f.db.ExecContext(f.ctx, `UPDATE accounts SET extra=extra || $2::jsonb WHERE id=$1`, f.account.ID, string(b))
 	require.NoError(f.t, err)
 	s, err := f.repo.Get(f.ctx, f.account.ID, observed)
 	require.NoError(f.t, err)

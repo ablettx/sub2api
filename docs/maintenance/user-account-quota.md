@@ -71,6 +71,8 @@ Responses、Chat Completions、Messages、同步和异步单图、独立 Alpha S
 
 ## 维护者合并与发布
 
+最近的上游同步及迁移衔接见 [v0.2.18 同步记录](upstream-v0.2.18.md)。
+
 1. 从上次已验证的维护版本创建维护分支，获取 `upstream`（`Wei-Shaw/sub2api`）最新代码，在维护分支解决合并冲突。不要用原版二进制覆盖维护程序。
 2. 重点检查调度、各执行入口、身份与定价、统一扣费事务、迁移和更新器。后续迁移使用独立文件名；已经应用的 `246_ablett_account_user_quota.sql` 及其他迁移不得改写 checksum。
 3. 执行 [验收记录中的检查](../../openspec/changes/add-user-account-dynamic-quota/verification.md)，确认金额、票据、版本发现及嵌入前端连续。提交、推送、标签和发布按实际操作分别取得授权。
